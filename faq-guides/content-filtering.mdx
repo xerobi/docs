@@ -1,0 +1,386 @@
+---
+title: Content Filtering FAQ
+description: Frequently asked questions about DNS-based content filtering and security
+---
+
+# Content Filtering FAQ
+
+This guide covers common questions about DNS-based content filtering, including how it works, configuration options, and best practices for implementing content controls.
+
+## Content Filtering Basics
+
+### What is DNS-based content filtering?
+
+DNS-based content filtering blocks access to websites and online content by filtering Domain Name System (DNS) queries. Instead of inspecting web content, it prevents devices from connecting to restricted domains at the DNS level.
+
+### How does DNS filtering work?
+
+1. **Query Interception**: DNS queries are sent to your configured DNS server
+2. **Policy Check**: The server checks the requested domain against filtering rules
+3. **Response Decision**: 
+   - **Allowed**: Returns the actual IP address
+   - **Blocked**: Returns a blocked response (NXDOMAIN or custom IP)
+4. **Client Handling**: Browser/app receives the response and either connects or shows an error
+
+### What are the advantages of DNS filtering?
+
+- **Network-Level Protection**: Works across all devices and applications
+- **Performance**: Minimal latency impact compared to content inspection
+- **Privacy**: No content inspection means no data payload analysis
+- **Simplicity**: Easy to deploy and manage
+- **Compatibility**: Works with all internet-connected devices
+
+## Xerobi Content Filtering Options
+
+### Filtering Levels
+
+Xerobi provides three levels of content filtering through different DNS ports:
+
+#### Port 53 - No Filtering
+- **Purpose**: Standard DNS resolution
+- **Content**: All domains allowed
+- **Use Case**: Maximum compatibility, no restrictions
+
+#### Port 54 - Malware Protection Only
+- **Purpose**: Security-focused filtering
+- **Blocks**: Malware, phishing, botnets, exploit sites
+- **Allows**: Adult content, gambling, social media
+- **Use Case**: Essential security without content restrictions
+
+#### Port 55 - Comprehensive Protection
+- **Purpose**: Full content and security filtering
+- **Blocks**: Malware + adult content + gambling + explicit material
+- **Use Case**: Strict environments (schools, businesses, families)
+
+### Content Categories
+
+#### Security Categories (All Ports)
+- **Malware Domains**: Virus distribution, trojan hosting
+- **Phishing Sites**: Fake login pages, credential theft
+- **Botnet C&C**: Command-and-control servers
+- **Exploit Kits**: Browser and system vulnerability sites
+- **Malicious Downloads**: Infected file hosting
+
+#### Content Categories (Port 55 Only)
+- **Adult Content**: Pornography, adult entertainment
+- **Gambling**: Online casinos, betting platforms
+- **Dating Services**: Adult-oriented dating sites
+- **Explicit Material**: Sites hosting adult media
+
+## Implementation
+
+### Network-Level Configuration
+
+**Router Configuration:**
+```bash
+# DHCP DNS server assignment
+# Set all devices to use filtered DNS
+dhcp-option=6,165.101.132.104,165.101.132.105
+```
+
+**Firewall Rules:**
+```bash
+# Allow only filtered DNS queries
+iptables -A INPUT -p udp --dport 53 -s [your-network] -d 165.101.132.104 -j ACCEPT
+iptables -A INPUT -p udp --dport 53 -s [your-network] -d 165.101.132.105 -j ACCEPT
+iptables -A INPUT -p udp --dport 53 -d [other-dns] -j DROP
+```
+
+### Device-Level Configuration
+
+**Windows Group Policy:**
+1. Open Group Policy Editor (`gpedit.msc`)
+2. Navigate to: Computer Configuration → Administrative Templates → Network → DNS Client
+3. Set "DNS Servers" to `165.101.132.104,165.101.132.105`
+
+**macOS Configuration Profile:**
+```xml
+<dict>
+    <key>DNSSettings</key>
+    <dict>
+        <key>ServerAddresses</key>
+        <array>
+            <string>165.101.132.104</string>
+            <string>165.101.132.105</string>
+        </array>
+    </dict>
+</dict>
+```
+
+### Application-Specific Setup
+
+**Chrome Extension:**
+```javascript
+// Force DNS for specific domains
+chrome.privacy.network.networkPredictionOptions = 'disabled';
+// Use system DNS settings
+```
+
+**Docker Containers:**
+```yaml
+version: '3.8'
+services:
+  app:
+    dns:
+      - 165.101.132.104
+      - 165.101.132.105
+    dns_search:
+      - yourdomain.com
+```
+
+## Advanced Configuration
+
+### Conditional Filtering
+
+**Time-Based Filtering:**
+```bash
+# Allow adult content only during certain hours
+# Requires custom DNS server configuration
+# Contact support for advanced filtering rules
+```
+
+**User-Based Filtering:**
+```bash
+# Different filtering levels per user/group
+# Implement via VLANs or separate DNS servers
+```
+
+### Custom Allow/Block Lists
+
+**Override Domains:**
+```bash
+# Allow specific blocked domains
+# Contact support@xerobi.com for whitelist requests
+```
+
+**Additional Blocking:**
+```bash
+# Block additional categories
+# Custom filtering available for enterprise clients
+```
+
+## Performance Considerations
+
+### Speed Impact
+
+DNS filtering adds minimal latency:
+- **Standard Queries**: < 5ms additional latency
+- **Filtered Queries**: < 10ms additional latency
+- **Cache Hit**: No performance impact
+
+### Bandwidth Usage
+
+- **Query Overhead**: ~50 bytes per filtered query
+- **Update Traffic**: Blocklist updates (~1MB/day)
+- **Monitoring**: Optional logging traffic
+
+### Caching Strategies
+
+**DNS Cache Optimization:**
+```bash
+# Increase cache size for better performance
+# Windows
+dnscmd /config /cachetimeout 3600
+
+# Linux
+# /etc/systemd/resolved.conf
+Cache=yes
+CacheFromLocalhost=no
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Sites not loading:**
+- Check if domain is blocked by your filtering level
+- Verify DNS server configuration
+- Clear DNS cache: `ipconfig /flushdns`
+
+**Inconsistent filtering:**
+- Some devices may bypass DNS settings
+- Check for VPN or proxy usage
+- Verify firewall rules
+
+**Slow performance:**
+- Test with different DNS servers
+- Check network latency
+- Verify blocklist update status
+
+### Diagnostic Tools
+
+**Test filtering:**
+```bash
+# Check if domain is blocked
+nslookup blocked-domain.com 165.101.132.104
+
+# Should return NXDOMAIN for blocked sites
+```
+
+**Monitor DNS traffic:**
+```bash
+# Linux - tcpdump
+tcpdump -i eth0 port 53
+
+# Windows - PowerShell
+Get-NetEventSession | Where-Object { $_.Name -like "*DNS*" }
+```
+
+**Check DNS resolution:**
+```bash
+# Test all filtering levels
+dig @165.101.132.104 example.com  # No filtering
+dig @165.101.132.104:54 example.com  # Malware only
+dig @165.101.132.104:55 example.com  # Full filtering
+```
+
+## Best Practices
+
+### For Home Networks
+
+1. **Start with Malware Protection**: Use port 54 for essential security
+2. **Gradual Implementation**: Test filtering before full deployment
+3. **Device-Specific Rules**: Use different filtering for different devices
+4. **Regular Monitoring**: Check blocked queries and adjust rules
+5. **User Education**: Explain filtering to family members
+
+### For Businesses
+
+1. **Policy-Based Filtering**: Different levels for different departments
+2. **Compliance Requirements**: Meet regulatory content filtering needs
+3. **Employee Training**: Educate staff about acceptable use
+4. **Incident Response**: Monitor for security threats
+5. **Regular Audits**: Review filtering effectiveness
+
+### For Schools/Educational
+
+1. **Age-Appropriate Filtering**: Balance security with educational needs
+2. **Bypass Mechanisms**: Controlled access for staff/research
+3. **Content Categories**: Customize based on curriculum needs
+4. **Reporting Tools**: Monitor filtering activity
+5. **Parental Communication**: Keep parents informed
+
+## Limitations and Considerations
+
+### Technical Limitations
+
+**DNS-Only Filtering:**
+- Cannot filter content within allowed domains
+- HTTPS sites may bypass some restrictions
+- IP-based access circumvents filtering
+
+**Bypass Methods:**
+- VPN services
+- Proxy servers
+- Direct IP access
+- Alternative DNS servers
+
+### Privacy Considerations
+
+**Query Logging:**
+- DNS queries may be logged for security analysis
+- No content inspection maintains privacy
+- Data retention policies apply
+
+**Data Handling:**
+- Minimal personal data collection
+- Aggregated analytics only
+- GDPR/CCPA compliance
+
+## Integration with Other Security
+
+### Multi-Layer Security
+
+**Complementary Technologies:**
+- **Web Filtering**: Content inspection at proxy level
+- **Endpoint Protection**: Antivirus and malware prevention
+- **Network Security**: Firewall and intrusion prevention
+- **User Training**: Security awareness programs
+
+**Recommended Stack:**
+1. DNS Filtering (Xerobi) - Network-level blocking
+2. Web Proxy - Content inspection
+3. Endpoint Security - Device protection
+4. User Education - Behavioral security
+
+### Enterprise Integration
+
+**Directory Services:**
+```bash
+# Active Directory integration
+# Group Policy for DNS configuration
+# User-based filtering policies
+```
+
+**SIEM Integration:**
+```bash
+# Log forwarding to security systems
+# Real-time threat detection
+# Compliance reporting
+```
+
+## Support and Resources
+
+### Getting Help
+
+**Configuration Support:**
+- Email: support@xerobi.com
+- Documentation: Check our DNS service guides
+- Community: Developer forums and discussions
+
+**Custom Requirements:**
+- Enterprise filtering needs
+- Custom allow/block lists
+- Integration assistance
+
+### Useful Links
+
+**Testing Tools:**
+- DNS leak test sites
+- Content filtering test domains
+- Performance monitoring tools
+
+**Industry Resources:**
+- DNS filtering best practices
+- Content classification standards
+- Security compliance guides
+
+## Frequently Asked Scenarios
+
+### "How do I allow a blocked site?"
+
+1. Verify the site is actually blocked
+2. Check your filtering level (port 53/54/55)
+3. Contact support for whitelist requests
+4. Consider if blocking is necessary
+
+### "Why is filtering not working on my mobile?"
+
+1. Check DNS settings in Wi-Fi configuration
+2. Verify no VPN is active
+3. Test with different browsers
+4. Check cellular data vs Wi-Fi
+
+### "Can I see what sites are being blocked?"
+
+1. Monitor DNS query logs
+2. Use diagnostic tools to test domains
+3. Check our status page for service health
+4. Contact support for detailed reports
+
+---
+
+<CardGroup cols={2}>
+  <Card title="DNS Service" href="/more/dns-service">
+    Complete DNS service documentation
+  </Card>
+  <Card title="DNS Security" href="/faq-guides/dns-security">
+    DNS security best practices
+  </Card>
+  <Card title="Network Security" href="/faq-guides/network-security">
+    Network security guidelines
+  </Card>
+  <Card title="Content Classification" href="https://www.icra.org/content-classification">
+    Content classification standards
+  </Card>
+</CardGroup>

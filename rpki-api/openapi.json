@@ -1,0 +1,896 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Routinator HTTP API",
+    "description": "HTTP API for Routinator - RPKI validation and Route Origin Authorization (ROA) service. Provides endpoints for checking route validity, monitoring RPKI infrastructure, and receiving real-time updates.",
+    "version": "0.15.0",
+    "contact": {
+      "name": "Routinator Support",
+      "url": "https://github.com/NLnetLabs/routinator"
+    },
+    "license": {
+      "name": "BSD-3-Clause",
+      "url": "https://opensource.org/licenses/BSD-3-Clause"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.hixbe.com/rpki",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Validity",
+      "description": "Route validity checking endpoints"
+    },
+    {
+      "name": "Status",
+      "description": "Service status and monitoring"
+    },
+    {
+      "name": "Delta",
+      "description": "Incremental updates and notifications"
+    },
+    {
+      "name": "Monitoring",
+      "description": "Logging and metrics endpoints"
+    }
+  ],
+  "paths": {
+    "/status": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Get comprehensive status information",
+        "description": "Returns exhaustive information in JSON format on all trust anchors, repositories, RRDP and rsync connections, as well as RTR and HTTP sessions. This data set provides the source for the Routinator user interface.",
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "description": "Successful response with status information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validity/{asNumber}/{prefix}": {
+      "get": {
+        "tags": ["Validity"],
+        "summary": "Check validity of a specific route",
+        "description": "Returns a JSON object describing whether the route announcement given by its origin AS Number and address prefix is RPKI valid, invalid, or not found. A complete list of VRPs that caused the result is included.",
+        "operationId": "getValidityByPath",
+        "parameters": [
+          {
+            "name": "asNumber",
+            "in": "path",
+            "description": "Autonomous System Number (can be in format 'AS64496' or just '64496')",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(AS)?[0-9]+$",
+              "example": "AS64496"
+            }
+          },
+          {
+            "name": "prefix",
+            "in": "path",
+            "description": "IP prefix in CIDR notation (e.g., 192.0.2.0/24 or 2001:db8::/32)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "192.0.2.0/24"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with validity information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid AS number or prefix format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validity": {
+      "get": {
+        "tags": ["Validity"],
+        "summary": "Check validity of a route (query parameters)",
+        "description": "Returns a JSON object describing whether the route announcement is RPKI valid, invalid, or not found. Same as the path-based endpoint but with a more form-friendly calling convention.",
+        "operationId": "getValidityByQuery",
+        "parameters": [
+          {
+            "name": "asn",
+            "in": "query",
+            "description": "Autonomous System Number",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(AS)?[0-9]+$",
+              "example": "AS64496"
+            }
+          },
+          {
+            "name": "prefix",
+            "in": "query",
+            "description": "IP prefix in CIDR notation",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "192.0.2.0/24"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with validity information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Validity"],
+        "summary": "Validate multiple routes",
+        "description": "Returns a JSON object describing the validity of multiple routes. Expects a JSON body with an array of route announcements. The request body size is limited to 100 kB.",
+        "operationId": "validateRoutes",
+        "requestBody": {
+          "description": "Array of routes to validate",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateRequest"
+              },
+              "example": {
+                "routes": [
+                  {
+                    "asn": "AS64496",
+                    "prefix": "192.0.2.0/24"
+                  },
+                  {
+                    "asn": "AS64497",
+                    "prefix": "2001:db8::/32"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response with validation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or body too large (>100 kB)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body exceeds 100 kB limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json-delta": {
+      "get": {
+        "tags": ["Delta"],
+        "summary": "Get incremental changes to the dataset",
+        "description": "Returns a JSON object with the changes since the dataset version identified by the session and serial query parameters. If a delta cannot be produced from that version, the full data set is returned and the 'reset' field will be true.",
+        "operationId": "getJsonDelta",
+        "parameters": [
+          {
+            "name": "session",
+            "in": "query",
+            "description": "Session ID from a previous response",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4"
+            }
+          },
+          {
+            "name": "serial",
+            "in": "query",
+            "description": "Serial number from a previous response",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with delta or full dataset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonDeltaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid session or serial parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/json-delta/notify": {
+      "get": {
+        "tags": ["Delta"],
+        "summary": "Get notification of dataset updates",
+        "description": "Returns session ID and serial number of the current dataset. If session and serial parameters match the current values, the request will block until a new dataset is available. This provides a long-polling mechanism for update notifications.",
+        "operationId": "getJsonDeltaNotify",
+        "parameters": [
+          {
+            "name": "session",
+            "in": "query",
+            "description": "Current session ID to wait for changes",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4"
+            }
+          },
+          {
+            "name": "serial",
+            "in": "query",
+            "description": "Current serial number to wait for changes",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with current session and serial (returns immediately if changed, or when timeout occurs)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid session or serial parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/log": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Get logging information",
+        "description": "Returns logging information from the Routinator service",
+        "operationId": "getLog",
+        "responses": {
+          "200": {
+            "description": "Successful response with log data",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Get Prometheus metrics",
+        "description": "Returns monitoring metrics in Prometheus format",
+        "operationId": "getMetrics",
+        "responses": {
+          "200": {
+            "description": "Successful response with metrics",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "# HELP routinator_valid_roas Number of valid ROAs\n# TYPE routinator_valid_roas gauge\nroutinator_valid_roas 123456\n"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/service-status": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Get service status",
+        "description": "Returns basic service status information",
+        "operationId": "getServiceStatus",
+        "responses": {
+          "200": {
+            "description": "Service is running",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Get version information",
+        "description": "Returns Routinator version information",
+        "operationId": "getVersion",
+        "responses": {
+          "200": {
+            "description": "Successful response with version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StatusResponse": {
+        "type": "object",
+        "description": "Comprehensive status information including trust anchors, repositories, and sessions",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Routinator version",
+            "example": "0.15.0"
+          },
+          "serial": {
+            "type": "integer",
+            "description": "Current serial number of the dataset"
+          },
+          "lastUpdateStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the last update started"
+          },
+          "lastUpdateDone": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the last update completed"
+          },
+          "trustAnchors": {
+            "type": "array",
+            "description": "Information about trust anchors",
+            "items": {
+              "$ref": "#/components/schemas/TrustAnchor"
+            }
+          },
+          "repositories": {
+            "type": "array",
+            "description": "Information about repositories",
+            "items": {
+              "$ref": "#/components/schemas/Repository"
+            }
+          },
+          "rtrSessions": {
+            "type": "array",
+            "description": "Active RTR sessions",
+            "items": {
+              "$ref": "#/components/schemas/RtrSession"
+            }
+          },
+          "httpSessions": {
+            "type": "array",
+            "description": "Active HTTP sessions",
+            "items": {
+              "$ref": "#/components/schemas/HttpSession"
+            }
+          }
+        }
+      },
+      "TrustAnchor": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "ARIN"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["valid", "invalid", "unknown"]
+          },
+          "certificateUri": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "Repository": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["rrdp", "rsync"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "error", "pending"]
+          },
+          "lastUpdate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RtrSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "remote": {
+            "type": "string",
+            "description": "Remote address and port"
+          },
+          "established": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HttpSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "remote": {
+            "type": "string",
+            "description": "Remote IP address"
+          },
+          "established": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ValidityResponse": {
+        "type": "object",
+        "required": ["validated_route"],
+        "properties": {
+          "validated_route": {
+            "$ref": "#/components/schemas/ValidatedRoute"
+          }
+        }
+      },
+      "ValidatedRoute": {
+        "type": "object",
+        "required": ["route", "validity"],
+        "properties": {
+          "route": {
+            "$ref": "#/components/schemas/Route"
+          },
+          "validity": {
+            "$ref": "#/components/schemas/Validity"
+          },
+          "vrps": {
+            "type": "object",
+            "description": "VRPs (Validated ROA Payloads) that determined the validity",
+            "properties": {
+              "matched": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VRP"
+                }
+              },
+              "unmatched_as": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VRP"
+                }
+              },
+              "unmatched_length": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VRP"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Route": {
+        "type": "object",
+        "required": ["origin_asn", "prefix"],
+        "properties": {
+          "origin_asn": {
+            "type": "string",
+            "pattern": "^AS[0-9]+$",
+            "example": "AS64496"
+          },
+          "prefix": {
+            "type": "string",
+            "example": "192.0.2.0/24"
+          }
+        }
+      },
+      "Validity": {
+        "type": "object",
+        "required": ["state"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["valid", "invalid", "not-found"],
+            "description": "RPKI validation state"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Additional information about the validity state"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the validation result"
+          }
+        }
+      },
+      "VRP": {
+        "type": "object",
+        "description": "Validated ROA Payload",
+        "properties": {
+          "asn": {
+            "type": "string",
+            "pattern": "^AS[0-9]+$",
+            "example": "AS64496"
+          },
+          "prefix": {
+            "type": "string",
+            "example": "192.0.2.0/24"
+          },
+          "max_length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128,
+            "example": 24
+          }
+        }
+      },
+      "ValidateRequest": {
+        "type": "object",
+        "required": ["routes"],
+        "properties": {
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteInput"
+            },
+            "maxItems": 1000,
+            "description": "Array of routes to validate (limited by 100 kB body size)"
+          }
+        }
+      },
+      "RouteInput": {
+        "type": "object",
+        "required": ["asn", "prefix"],
+        "properties": {
+          "asn": {
+            "type": "string",
+            "pattern": "^(AS)?[0-9]+$",
+            "example": "AS64496"
+          },
+          "prefix": {
+            "type": "string",
+            "example": "192.0.2.0/24"
+          }
+        }
+      },
+      "ValidateResponse": {
+        "type": "object",
+        "required": ["validated_routes"],
+        "properties": {
+          "validated_routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidatedRoute"
+            }
+          }
+        }
+      },
+      "JsonDeltaResponse": {
+        "type": "object",
+        "required": ["session", "serial"],
+        "properties": {
+          "session": {
+            "type": "string",
+            "description": "Session ID of the current dataset",
+            "example": "a1b2c3d4"
+          },
+          "serial": {
+            "type": "integer",
+            "description": "Serial number of the current dataset",
+            "example": 43
+          },
+          "reset": {
+            "type": "boolean",
+            "description": "If true, this is a full dataset rather than a delta. The 'withdrawn' field will not be present.",
+            "example": false
+          },
+          "announced": {
+            "type": "array",
+            "description": "Route origins that have been announced since the previous version",
+            "items": {
+              "$ref": "#/components/schemas/RouteOrigin"
+            }
+          },
+          "withdrawn": {
+            "type": "array",
+            "description": "Route origins that have been withdrawn since the previous version. Not present when reset is true.",
+            "items": {
+              "$ref": "#/components/schemas/RouteOrigin"
+            }
+          }
+        }
+      },
+      "RouteOrigin": {
+        "type": "object",
+        "required": ["asn", "prefix", "max_length"],
+        "properties": {
+          "asn": {
+            "type": "string",
+            "pattern": "^AS[0-9]+$",
+            "example": "AS64496"
+          },
+          "prefix": {
+            "type": "string",
+            "example": "192.0.2.0/24"
+          },
+          "max_length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128,
+            "example": 24
+          }
+        }
+      },
+      "NotifyResponse": {
+        "type": "object",
+        "required": ["session", "serial"],
+        "properties": {
+          "session": {
+            "type": "string",
+            "description": "Session ID of the current dataset",
+            "example": "a1b2c3d4"
+          },
+          "serial": {
+            "type": "integer",
+            "description": "Serial number of the current dataset",
+            "example": 43
+          }
+        }
+      },
+      "VersionResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "0.15.0"
+          },
+          "built": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Build timestamp"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code"
+          }
+        }
+      }
+    }
+  },
+  "x-kong-route-defaults": {
+    "strip_path": false,
+    "preserve_host": true
+  }
+}

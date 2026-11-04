@@ -1,0 +1,78 @@
+---
+title: Xerobi Payment API Introduction
+description: Xerobi Payment API - A developer-first REST API for a modern payment gateway
+---
+
+> **Note**: This API is focused on predictable semantics, idempotency, clear errors, and observability.
+
+## Overview
+
+The Xerobi Payment API provides a comprehensive set of endpoints for handling payments, customers, payment methods, refunds, and webhooks. All amounts are in smallest currency unit (e.g., paisa for BDT).
+
+## Authentication
+
+All requests require Bearer token authentication:
+
+```
+Authorization: Bearer <sk_...>
+```
+
+## Base URLs
+
+- Sandbox: `https://sandbox.api.hixbe.com/payment`
+- Production: `https://api.hixbe.com/payment`
+
+## Versioning
+
+API versioning is handled via the `Xerobi-Version` header. Use `2026-01-01` for the latest version.
+
+Include this header in all API requests:
+
+```
+Xerobi-Version: 2026-01-01
+```
+
+## Key Concepts
+
+### Payment Intents
+The recommended pattern for collecting payments. Create an intent, attach a payment method, and confirm to complete the payment.
+
+### Payment Methods
+Tokenized payment instruments that can be attached to customers or used directly.
+
+### Customers
+Store customer information and associate payment methods for recurring payments.
+
+### Refunds
+Issue full or partial refunds for completed charges.
+
+### Webhooks
+Receive real-time notifications about payment events.
+
+## Error Handling
+
+All errors follow a consistent format with `type`, `code`, `message`, and optional `param` and `request_id` fields.
+
+## Idempotency
+
+Use the `Idempotency-Key` header for safe retries of POST requests.
+
+## Getting Started
+
+<CardGroup cols={2}>
+<Card title="Quickstart Guide" icon="rocket" href="/faq-guides/quickstart">
+Get started with your first payment integration
+</Card>
+
+<Card title="Payment API FAQ" icon="credit-card" href="/faq-guides/payment-api-faq">
+Common questions and detailed guides
+</Card>
+
+<Card title="Authentication" icon="key" href="/faq-guides/authentication">
+Learn about API keys and security
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up payment notifications
+</Card>
+</CardGroup>

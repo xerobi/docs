@@ -1,0 +1,253 @@
+---
+title: "Payment API FAQ"
+description: "Frequently asked questions about the Xerobi Payment Gateway API"
+icon: credit-card
+---
+
+## Payment Processing
+
+### How do I create a payment intent?
+
+<AccordionGroup>
+<Accordion title="Basic payment intent creation">
+To create a payment intent, send a POST request to `/payment_intents` with the amount, currency, and description:
+
+```bash
+curl -X POST "https://api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1000,
+    "currency": "USD",
+    "description": "Order #12345"
+  }'
+```
+
+The response includes a client secret for frontend integration.
+</Accordion>
+
+<Accordion title="What currencies are supported?">
+Xerobi supports all major currencies including USD, EUR, GBP, CAD, AUD, and many others. The currency must be specified as a three-letter ISO code.
+</Accordion>
+
+<Accordion title="How do I handle different payment methods?">
+You can accept various payment methods by creating payment methods and attaching them to payment intents or customers. Supported methods include credit cards, debit cards, and digital wallets.
+</Accordion>
+</AccordionGroup>
+
+### Payment Confirmation
+
+<AccordionGroup>
+<Accordion title="When should I confirm a payment intent?">
+Confirm the payment intent when you're ready to charge the customer. This typically happens after collecting payment details on the frontend using the client secret.
+</Accordion>
+
+<Accordion title="What happens if confirmation fails?">
+If confirmation fails, the payment intent status will be `requires_payment_method` or `requires_action`. Check the `last_payment_error` field for details about the failure.
+</Accordion>
+
+<Accordion title="Can I confirm payments server-side only?">
+Yes, you can confirm payments entirely server-side by providing the payment method details directly in the confirmation request, though this requires PCI compliance.
+</Accordion>
+</AccordionGroup>
+
+## Customers and Payment Methods
+
+### Managing Customers
+
+<AccordionGroup>
+<Accordion title="When should I create customers?">
+Create customers when you need to save payment methods for future use, implement subscriptions, or track payment history for specific users.
+</Accordion>
+
+<Accordion title="How do I attach payment methods to customers?">
+First create a payment method, then attach it to a customer:
+
+```javascript
+// 1. Create payment method
+const paymentMethod = await api.createPaymentMethod({
+  type: 'card',
+  card: { number, exp_month, exp_year, cvc }
+});
+
+// 2. Attach to customer
+await api.attachPaymentMethodToCustomer(customerId, paymentMethod.id);
+```
+</Accordion>
+
+<Accordion title="Can customers have multiple payment methods?">
+Yes, customers can have multiple saved payment methods. You can list them and set a default payment method for easier checkout.
+</Accordion>
+</AccordionGroup>
+
+## Refunds and Disputes
+
+### Processing Refunds
+
+<AccordionGroup>
+<Accordion title="How do I process a refund?">
+Create a refund by providing the payment intent ID and optionally the amount to refund:
+
+```bash
+curl -X POST "https://api.hixbe.com/payment/refunds" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payment_intent": "pi_1234567890",
+    "amount": 500
+  }'
+```
+</Accordion>
+
+<Accordion title="Can I refund partial amounts?">
+Yes, you can refund any amount up to the original payment amount. Multiple partial refunds are allowed as long as the total doesn't exceed the original payment.
+</Accordion>
+
+<Accordion title="How long do refunds take?">
+Refunds typically process within 5-10 business days, depending on the customer's bank and payment method. You'll receive webhook notifications when the refund completes.
+</Accordion>
+</AccordionGroup>
+
+## Webhooks and Events
+
+### Payment Webhooks
+
+<AccordionGroup>
+<Accordion title="What webhook events should I listen for?">
+Essential events to monitor:
+- `payment_intent.succeeded` - Payment completed successfully
+- `payment_intent.payment_failed` - Payment failed
+- `payment_intent.canceled` - Payment was canceled
+- `refund.succeeded` - Refund processed
+</Accordion>
+
+<Accordion title="How do I handle webhook retries?">
+Xerobi automatically retries failed webhooks. Implement idempotency using event IDs to handle duplicate events safely.
+</Accordion>
+
+<Accordion title="Can I test webhooks?">
+Yes, use the dashboard to send test webhook events to your endpoints during development.
+</Accordion>
+</AccordionGroup>
+
+## Security and Compliance
+
+### PCI Compliance
+
+<AccordionGroup>
+<Accordion title="How does Xerobi handle PCI compliance?">
+Xerobi is PCI DSS Level 1 compliant. When using our hosted payment forms, sensitive card data never touches your servers, reducing your PCI scope.
+</Accordion>
+
+<Accordion title="What if I need to handle card data directly?">
+If you must handle card data server-side, you'll need full PCI compliance. We recommend using our client-side integration instead.
+</Accordion>
+
+<Accordion title="Are payment methods tokenized?">
+Yes, all payment methods are tokenized. We never store raw card numbers - only tokens that can be used for future payments.
+</Accordion>
+</AccordionGroup>
+
+## Testing and Sandbox
+
+### Sandbox Environment
+
+<AccordionGroup>
+<Accordion title="How do I test payments?">
+Use our sandbox environment at `https://sandbox.api.hixbe.com`. Use test API keys and test card numbers like `4242 4242 4242 4242`.
+</Accordion>
+
+<Accordion title="What test cards are available?">
+- `4242 4242 4242 4242` - Succeeds
+- `4000 0000 0000 0002` - Declined
+- `4000 0025 0000 3155` - Requires authentication
+</Accordion>
+
+<Accordion title="Do sandbox payments appear in production?">
+No, sandbox and production are completely separate environments. Test data never affects live payments.
+</Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+### Common Payment Errors
+
+<AccordionGroup>
+<Accordion title="CARD_DECLINED - What does this mean?">
+The customer's card was declined by their bank. Common reasons include insufficient funds, expired card, or bank restrictions.
+</Accordion>
+
+<Accordion title="INSUFFICIENT_FUNDS - How to handle?">
+The account doesn't have enough funds. Ask the customer to use a different payment method or add funds to their account.
+</Accordion>
+
+<Accordion title="PAYMENT_INTENT_EXPIRED - What happened?">
+Payment intents expire after 24 hours by default. Create a new payment intent for the customer to try again.
+</Accordion>
+</AccordionGroup>
+
+## Integration Best Practices
+
+### Performance and Reliability
+
+<AccordionGroup>
+<Accordion title="How do I handle rate limits?">
+Monitor the `X-RateLimit-Remaining` header and implement exponential backoff when approaching limits. Payment API allows 100 requests per minute.
+</Accordion>
+
+<Accordion title="Should I use idempotency keys?">
+Yes, always use idempotency keys for payment operations to prevent duplicate charges if requests are retried.
+</Accordion>
+
+<Accordion title="How do I implement proper error handling?">
+Check the `success` field in all responses. Handle different error codes appropriately and provide meaningful feedback to users.
+</Accordion>
+</AccordionGroup>
+
+## Billing and Pricing
+
+### Understanding Costs
+
+<AccordionGroup>
+<Accordion title="How am I charged for payments?">
+You pay a percentage of each successful transaction plus a fixed fee per transaction. Check your dashboard for current pricing.
+</Accordion>
+
+<Accordion title="Are there fees for refunds?">
+Refunds may incur processing fees depending on your pricing plan. Failed payments don't incur transaction fees.
+</Accordion>
+
+<Accordion title="How do I monitor my usage?">
+Use the dashboard to track transaction volume, success rates, and costs in real-time.
+</Accordion>
+</AccordionGroup>
+
+## Need More Help?
+
+<CardGroup cols={2}>
+<Card title="Payment API Docs" icon="book" href="/payment-api/introduction">
+Complete API reference
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up payment notifications
+</Card>
+
+<Card title="Error Handling" icon="alert-triangle" href="/faq-guides/error-handling">
+Handle payment errors
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+Payment integration best practices
+</Card>
+
+<Card title="Troubleshooting" icon="wrench" href="/faq-guides/troubleshooting">
+Payment-specific issues
+</Card>
+
+<Card title="Support" icon="life-ring" href="mailto:support@xerobi.com">
+Contact our support team
+</Card>
+</CardGroup>

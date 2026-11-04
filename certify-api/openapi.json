@@ -1,0 +1,1210 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Xerobi Certification & Badge API",
+        "version": "2026-01-01",
+        "description": "A comprehensive API for issuing, managing, and verifying digital certificates and badges. Perfect for educational institutions, certification bodies, and organizations requiring verifiable credential management. Supports certificate templates, digital badges, credential lifecycle management, public verification, webhooks, and comprehensive audit logging.",
+        "contact": {
+            "name": "Xerobi Support",
+            "email": "support@xerobi.com"
+        },
+        "license": {
+            "name": "Proprietary"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://api.hixbe.com/certify",
+            "description": "Production"
+        }
+    ],
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Templates",
+            "description": "Certificate template management - create and manage reusable certificate designs"
+        },
+        {
+            "name": "Credentials",
+            "description": "Issued credential management - view and track digital certificates and badges"
+        },
+        {
+            "name": "Badges",
+            "description": "Digital badge definitions - create and manage badge metadata and criteria"
+        },
+        {
+            "name": "Verification",
+            "description": "Public credential verification - validate issued certificates and badges"
+        },
+        {
+            "name": "Issuance",
+            "description": "Credential issuance - create and distribute digital certificates and badges"
+        },
+        {
+            "name": "Webhooks",
+            "description": "Event notifications - configure webhooks for credential lifecycle events"
+        },
+        {
+            "name": "Audit Logs",
+            "description": "Activity tracking - comprehensive audit trail for all credential operations"
+        },
+        {
+            "name": "Programs",
+            "description": "Certification programs - organize credentials into structured programs"
+        },
+        {
+            "name": "Revocation",
+            "description": "Credential revocation - invalidate certificates and badges when necessary"
+        }
+    ],
+    "paths": {
+        "/templates": {
+            "get": {
+                "operationId": "listTemplates",
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "List certificate templates",
+                "description": "Retrieve a list of all certificate templates available in your organization. Templates define the visual design and field structure for certificates.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved certificate templates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListTemplatesResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "tmpl_1234567890abcdef",
+                                            "name": "Completion Certificate",
+                                            "created_at": "2025-12-01T10:00:00Z"
+                                        },
+                                        {
+                                            "id": "tmpl_0987654321fedcba",
+                                            "name": "Achievement Badge",
+                                            "created_at": "2025-11-15T14:30:00Z"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "createTemplate",
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Create certificate template",
+                "description": "Create a new certificate template with custom background image and field definitions. Templates are reusable designs for issuing certificates.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTemplateRequest"
+                            },
+                            "example": {
+                                "name": "Professional Certification",
+                                "background_url": "https://example.com/certificates/professional-cert-bg.png",
+                                "fields": ["recipient_name", "course_title", "completion_date", "instructor_name"]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Certificate template created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateResponse"
+                                },
+                                "example": {
+                                    "id": "tmpl_1234567890abcdef",
+                                    "name": "Professional Certification",
+                                    "created_at": "2025-12-03T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/credentials": {
+            "get": {
+                "operationId": "listCredentials",
+                "tags": [
+                    "Credentials"
+                ],
+                "summary": "List issued credentials",
+                "description": "Retrieve a paginated list of all credentials issued by your organization, including certificates and badges. Use this endpoint to track issued credentials and their current status.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved issued credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListCredentialsResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "cred_1234567890abcdef",
+                                            "status": "issued",
+                                            "verify_url": "https://verify.hixbe.com/cred_1234567890abcdef"
+                                        },
+                                        {
+                                            "id": "cred_0987654321fedcba",
+                                            "status": "revoked",
+                                            "verify_url": "https://verify.hixbe.com/cred_0987654321fedcba"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/issue": {
+            "post": {
+                "operationId": "issueCredential",
+                "tags": [
+                    "Issuance"
+                ],
+                "summary": "Issue certificate or badge",
+                "description": "Issue a new digital certificate or badge to a recipient. The credential will be generated based on the specified template and recipient information. An email notification will be sent to the recipient with their credential details.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IssueCredentialRequest"
+                            },
+                            "example": {
+                                "recipient": {
+                                    "name": "John Doe",
+                                    "email": "john.doe@example.com"
+                                },
+                                "template_id": "tmpl_1234567890abcdef",
+                                "metadata": {
+                                    "course_title": "Advanced Web Development",
+                                    "completion_date": "2025-12-01",
+                                    "grade": "A+",
+                                    "instructor": "Jane Smith"
+                                },
+                                "expire_at": "2028-12-01T00:00:00Z"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Credential issued successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialResponse"
+                                },
+                                "example": {
+                                    "id": "cred_1234567890abcdef",
+                                    "status": "issued",
+                                    "verify_url": "https://verify.hixbe.com/cred_1234567890abcdef"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/verify/{credential_id}": {
+            "get": {
+                "operationId": "verifyCredential",
+                "tags": [
+                    "Verification"
+                ],
+                "summary": "Verify issued credential",
+                "description": "Public endpoint to verify the authenticity and current status of a digital certificate or badge. This endpoint can be used by third parties to validate credentials without authentication.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    },
+                    {
+                        "in": "path",
+                        "name": "credential_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Unique identifier of the credential to verify",
+                            "example": "cred_1234567890abcdef"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credential verification result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerificationResponse"
+                                },
+                                "example": {
+                                    "valid": true,
+                                    "recipient": "John Doe",
+                                    "issued_at": "2025-12-01T10:00:00Z",
+                                    "revoked": false
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/revoke/{credential_id}": {
+            "post": {
+                "operationId": "revokeCredential",
+                "tags": [
+                    "Revocation"
+                ],
+                "summary": "Revoke a credential",
+                "description": "Revoke a previously issued credential, marking it as invalid. This action cannot be undone. The credential will no longer be verifiable and the recipient will be notified if webhooks are configured.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    },
+                    {
+                        "in": "path",
+                        "name": "credential_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Unique identifier of the credential to revoke",
+                            "example": "cred_1234567890abcdef"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credential revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RevocationResponse"
+                                },
+                                "example": {
+                                    "status": "revoked",
+                                    "revoked_at": "2025-12-03T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/badges": {
+            "get": {
+                "operationId": "listBadges",
+                "tags": [
+                    "Badges"
+                ],
+                "summary": "List badge definitions",
+                "description": "Retrieve a list of all digital badge definitions in your organization. Badges are metadata definitions that can be used when issuing credentials.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved badge definitions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListBadgesResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "badge_1234567890abcdef",
+                                            "name": "Excellence Award"
+                                        },
+                                        {
+                                            "id": "badge_0987654321fedcba",
+                                            "name": "Community Contributor"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "createBadge",
+                "tags": [
+                    "Badges"
+                ],
+                "summary": "Create badge definition",
+                "description": "Create a new digital badge definition with metadata including name, image, and earning criteria. Badge definitions are reusable templates for issuing achievement badges.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateBadgeRequest"
+                            },
+                            "example": {
+                                "name": "Certified Expert",
+                                "image_url": "https://example.com/badges/expert-badge.png",
+                                "criteria": "Successfully complete advanced certification exam with 90% or higher score"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Badge definition created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BadgeResponse"
+                                },
+                                "example": {
+                                    "id": "badge_1234567890abcdef",
+                                    "name": "Certified Expert"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/programs": {
+            "get": {
+                "operationId": "listPrograms",
+                "tags": [
+                    "Programs"
+                ],
+                "summary": "List certification programs",
+                "description": "Retrieve a list of all certification programs in your organization. Programs help organize related credentials and track learning pathways.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved certification programs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListProgramsResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "prog_1234567890abcdef",
+                                            "name": "Web Development Certification"
+                                        },
+                                        {
+                                            "id": "prog_0987654321fedcba",
+                                            "name": "Data Science Program"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "createProgram",
+                "tags": [
+                    "Programs"
+                ],
+                "summary": "Create certification program",
+                "description": "Create a new certification program to organize related credentials. Programs provide structure for learning pathways and credential hierarchies.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateProgramRequest"
+                            },
+                            "example": {
+                                "name": "Advanced Cybersecurity Certification",
+                                "description": "Comprehensive program covering network security, ethical hacking, and compliance frameworks"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Certification program created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProgramResponse"
+                                },
+                                "example": {
+                                    "id": "prog_1234567890abcdef",
+                                    "name": "Advanced Cybersecurity Certification"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/webhooks": {
+            "post": {
+                "operationId": "createWebhook",
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Create webhook endpoint",
+                "description": "Register a webhook endpoint to receive real-time notifications about credential events such as issuance, revocation, and verification attempts. Webhooks help you stay updated on credential lifecycle changes.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateWebhookRequest"
+                            },
+                            "example": {
+                                "url": "https://api.example.com/webhooks/hixbe",
+                                "events": ["credential.issued", "credential.revoked", "credential.verified"]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Webhook endpoint created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookResponse"
+                                },
+                                "example": {
+                                    "id": "wh_1234567890abcdef",
+                                    "url": "https://api.example.com/webhooks/hixbe"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/audit/logs": {
+            "get": {
+                "operationId": "listAuditLogs",
+                "tags": [
+                    "Audit Logs"
+                ],
+                "summary": "List audit logs",
+                "description": "Retrieve a comprehensive audit trail of all credential-related activities in your organization. This includes credential issuance, revocation, verification attempts, and administrative actions for compliance and security purposes.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Xerobi-Version"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved audit logs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListAuditLogsResponse"
+                                },
+                                "example": {
+                                    "logs": [
+                                        {
+                                            "actor": "user_1234567890abcdef",
+                                            "action": "credential.issued",
+                                            "timestamp": "2025-12-03T10:00:00Z"
+                                        },
+                                        {
+                                            "actor": "system",
+                                            "action": "credential.verified",
+                                            "timestamp": "2025-12-03T09:45:00Z"
+                                        },
+                                        {
+                                            "actor": "admin_0987654321fedcba",
+                                            "action": "credential.revoked",
+                                            "timestamp": "2025-12-02T16:30:00Z"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Xerobi-Version": {
+                "name": "Xerobi-Version",
+                "in": "header",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "2026-01-01"
+                },
+                "description": "API version in YYYY-MM-DD format"
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "responses": {
+            "BadRequest": {
+                "description": "Bad Request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Unauthorized": {
+                "description": "Unauthorized",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Not Found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "InternalServerError": {
+                "description": "Internal Server Error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "schemas": {
+            "CreateTemplateRequest": {
+                "type": "object",
+                "description": "Request payload for creating a new certificate template",
+                "required": [
+                    "name",
+                    "background_url"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Display name for the certificate template",
+                        "example": "Professional Certification"
+                    },
+                    "background_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the background image for the certificate",
+                        "example": "https://example.com/certificates/professional-cert-bg.png"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "description": "Array of field names that can be populated when issuing certificates",
+                        "items": {
+                            "type": "string",
+                            "example": "recipient_name"
+                        },
+                        "example": ["recipient_name", "course_title", "completion_date", "instructor_name"]
+                    }
+                }
+            },
+            "TemplateResponse": {
+                "type": "object",
+                "description": "Response containing certificate template information",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the template",
+                        "example": "tmpl_1234567890abcdef"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name of the template",
+                        "example": "Professional Certification"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Timestamp when the template was created",
+                        "example": "2025-12-01T10:00:00Z"
+                    }
+                }
+            },
+            "ListTemplatesResponse": {
+                "type": "object",
+                "description": "Response containing a list of certificate templates",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of certificate templates",
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateResponse"
+                        }
+                    }
+                }
+            },
+            "IssueCredentialRequest": {
+                "type": "object",
+                "description": "Request payload for issuing a new credential",
+                "required": [
+                    "recipient",
+                    "template_id"
+                ],
+                "properties": {
+                    "recipient": {
+                        "type": "object",
+                        "description": "Information about the credential recipient",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Full name of the recipient",
+                                "example": "John Doe"
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "description": "Email address of the recipient for notifications",
+                                "example": "john.doe@example.com"
+                            }
+                        }
+                    },
+                    "template_id": {
+                        "type": "string",
+                        "description": "ID of the template to use for this credential",
+                        "example": "tmpl_1234567890abcdef"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Additional custom data to include with the credential",
+                        "example": {
+                            "course_title": "Advanced Web Development",
+                            "completion_date": "2025-12-01",
+                            "grade": "A+",
+                            "instructor": "Jane Smith"
+                        }
+                    },
+                    "expire_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Optional expiration date for the credential",
+                        "example": "2028-12-01T00:00:00Z"
+                    }
+                }
+            },
+            "CredentialResponse": {
+                "type": "object",
+                "description": "Response containing issued credential information",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the issued credential",
+                        "example": "cred_1234567890abcdef"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Current status of the credential",
+                        "example": "issued",
+                        "enum": ["issued", "revoked"]
+                    },
+                    "verify_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Public URL for verifying this credential",
+                        "example": "https://verify.hixbe.com/cred_1234567890abcdef"
+                    }
+                }
+            },
+            "ListCredentialsResponse": {
+                "type": "object",
+                "description": "Response containing a list of issued credentials",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of issued credentials",
+                        "items": {
+                            "$ref": "#/components/schemas/CredentialResponse"
+                        }
+                    }
+                }
+            },
+            "VerificationResponse": {
+                "type": "object",
+                "description": "Response containing credential verification result",
+                "properties": {
+                    "valid": {
+                        "type": "boolean",
+                        "description": "Whether the credential is valid and authentic",
+                        "example": true
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "description": "Name of the credential recipient",
+                        "example": "John Doe"
+                    },
+                    "issued_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Timestamp when the credential was issued",
+                        "example": "2025-12-01T10:00:00Z"
+                    },
+                    "revoked": {
+                        "type": "boolean",
+                        "description": "Whether the credential has been revoked",
+                        "example": false
+                    }
+                }
+            },
+            "RevocationResponse": {
+                "type": "object",
+                "description": "Response confirming credential revocation",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "description": "Revocation status",
+                        "example": "revoked"
+                    },
+                    "revoked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Timestamp when the credential was revoked",
+                        "example": "2025-12-03T10:00:00Z"
+                    }
+                }
+            },
+            "CreateBadgeRequest": {
+                "type": "object",
+                "description": "Request payload for creating a new badge definition",
+                "required": [
+                    "name",
+                    "image_url"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Display name for the badge",
+                        "example": "Certified Expert"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the badge image",
+                        "example": "https://example.com/badges/expert-badge.png"
+                    },
+                    "criteria": {
+                        "type": "string",
+                        "description": "Description of how to earn this badge",
+                        "example": "Successfully complete advanced certification exam with 90% or higher score"
+                    }
+                }
+            },
+            "BadgeResponse": {
+                "type": "object",
+                "description": "Response containing badge definition information",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the badge definition",
+                        "example": "badge_1234567890abcdef"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name of the badge",
+                        "example": "Certified Expert"
+                    }
+                }
+            },
+            "ListBadgesResponse": {
+                "type": "object",
+                "description": "Response containing a list of badge definitions",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of badge definitions",
+                        "items": {
+                            "$ref": "#/components/schemas/BadgeResponse"
+                        }
+                    }
+                }
+            },
+            "CreateProgramRequest": {
+                "type": "object",
+                "description": "Request payload for creating a new certification program",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Display name for the certification program",
+                        "example": "Advanced Cybersecurity Certification"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed description of the certification program",
+                        "example": "Comprehensive program covering network security, ethical hacking, and compliance frameworks"
+                    }
+                }
+            },
+            "ProgramResponse": {
+                "type": "object",
+                "description": "Response containing certification program information",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the program",
+                        "example": "prog_1234567890abcdef"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name of the program",
+                        "example": "Advanced Cybersecurity Certification"
+                    }
+                }
+            },
+            "ListProgramsResponse": {
+                "type": "object",
+                "description": "Response containing a list of certification programs",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "description": "Array of certification programs",
+                        "items": {
+                            "$ref": "#/components/schemas/ProgramResponse"
+                        }
+                    }
+                }
+            },
+            "CreateWebhookRequest": {
+                "type": "object",
+                "description": "Request payload for creating a webhook endpoint",
+                "required": [
+                    "url",
+                    "events"
+                ],
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "HTTPS URL where webhook events will be sent",
+                        "example": "https://api.example.com/webhooks/hixbe"
+                    },
+                    "events": {
+                        "type": "array",
+                        "description": "Array of event types to subscribe to",
+                        "items": {
+                            "type": "string",
+                            "enum": ["credential.issued", "credential.revoked", "credential.verified"],
+                            "example": "credential.issued"
+                        },
+                        "example": ["credential.issued", "credential.revoked", "credential.verified"]
+                    }
+                }
+            },
+            "WebhookResponse": {
+                "type": "object",
+                "description": "Response containing webhook endpoint information",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the webhook endpoint",
+                        "example": "wh_1234567890abcdef"
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "URL where webhook events are sent",
+                        "example": "https://api.example.com/webhooks/hixbe"
+                    }
+                }
+            },
+            "ListAuditLogsResponse": {
+                "type": "object",
+                "description": "Response containing audit log entries",
+                "properties": {
+                    "logs": {
+                        "type": "array",
+                        "description": "Array of audit log entries",
+                        "items": {
+                            "type": "object",
+                            "description": "Individual audit log entry",
+                            "properties": {
+                                "actor": {
+                                    "type": "string",
+                                    "description": "Identifier of the user or system that performed the action",
+                                    "example": "user_1234567890abcdef"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "description": "Type of action performed",
+                                    "example": "credential.issued",
+                                    "enum": ["credential.issued", "credential.revoked", "credential.verified", "template.created", "badge.created", "program.created"]
+                                },
+                                "timestamp": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "Timestamp when the action occurred",
+                                    "example": "2025-12-03T10:00:00Z"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Error": {
+                "type": "object",
+                "description": "Standard error response format",
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "description": "Error type identifier",
+                        "example": "invalid_request"
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Human-readable error message",
+                        "example": "The credential ID provided is invalid"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Optional error code for programmatic handling",
+                        "example": "INVALID_CREDENTIAL_ID"
+                    }
+                },
+                "required": [
+                    "error",
+                    "message"
+                ]
+            }
+        }
+    }
+}

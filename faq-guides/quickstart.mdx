@@ -1,0 +1,168 @@
+---
+title: "Quickstart Guide"
+description: "Get started with Xerobi APIs in minutes"
+icon: rocket
+---
+
+## Welcome to Xerobi APIs
+
+Get up and running with Xerobi's Payment Gateway, SMS Gateway, or Certification & Badge APIs in just a few steps.
+
+## Step 1: Get Your API Keys
+
+<Steps>
+<Step title="Sign up for a Xerobi account">
+
+Visit [dash.hixbe.com](https://dash.hixbe.com) and create your account. Choose the APIs you need (Payment, SMS, or Certification).
+
+</Step>
+
+<Step title="Generate API keys">
+
+1. Go to your dashboard
+2. Navigate to API Keys section
+3. Create a new API key with appropriate permissions
+4. Copy your secret key (keep it secure!)
+
+<Warning>
+  **Never share your API keys publicly.** Store them securely and rotate them regularly.
+</Warning>
+
+</Step>
+</Steps>
+
+## Step 2: Make Your First API Call
+
+<Steps>
+<Step title="Set up authentication">
+
+All Xerobi API requests require authentication using Bearer tokens and API versioning. Learn more about [authentication](/faq-guides/authentication) and [API versioning](/faq-guides/versioning).
+
+```bash
+curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json"
+```
+
+</Step>
+
+<Step title="Choose your API">
+
+<CardGroup cols={3}>
+<Card title="Payment Gateway" icon="credit-card" href="/payment-api/introduction">
+Process payments, manage customers, handle refunds
+</Card>
+
+<Card title="SMS Gateway" icon="message" href="/sms-api/introduction">
+Send SMS messages globally with delivery tracking
+</Card>
+
+<Card title="Certification & Badge" icon="certificate" href="/certify-api/introduction">
+Issue and verify digital credentials and badges
+</Card>
+</CardGroup>
+
+</Step>
+
+<Step title="Test with sample data">
+
+Use our sandbox environment for testing:
+
+```bash
+# Use sandbox base URL for testing
+curl -X POST "https://sandbox.api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1000,
+    "currency": "USD",
+    "description": "Test payment"
+  }'
+```
+
+</Step>
+</Steps>
+
+## Step 3: Handle Responses
+
+<Steps>
+<Step title="Parse API responses">
+
+All APIs return JSON responses with consistent error handling:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "pi_1234567890",
+    "amount": 1000,
+    "currency": "USD",
+    "status": "succeeded"
+  }
+}
+```
+
+</Step>
+
+<Step title="Handle errors gracefully">
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "The request is missing required parameters",
+    "details": {
+      "missing_fields": ["amount"]
+    }
+  }
+}
+```
+
+</Step>
+</Steps>
+
+## Step 4: Go Live
+
+<Steps>
+<Step title="Switch to production">
+
+Replace sandbox URLs with production URLs:
+
+- Sandbox: `https://sandbox.api.hixbe.com`
+- Production: `https://api.hixbe.com`
+
+</Step>
+
+<Step title="Monitor your integration">
+
+Use [webhooks](/faq-guides/webhooks) to receive real-time updates about payment status, SMS delivery, or credential changes.
+
+</Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+<Card title="Authentication Guide" icon="key" href="/faq-guides/authentication">
+Learn about API keys, OAuth, and security best practices
+</Card>
+
+<Card title="API Versioning" icon="tag" href="/faq-guides/versioning">
+Understand how Xerobi handles API versioning
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up real-time notifications for your application
+</Card>
+
+<Card title="Error Handling" icon="exclamation-triangle" href="/faq-guides/error-handling">
+Handle API errors and implement retry logic
+</Card>
+</CardGroup>
+
+<Note>
+  **Need help?** Check our [troubleshooting guide](/faq-guides/troubleshooting) or contact [support@xerobi.com](mailto:support@xerobi.com).
+</Note>

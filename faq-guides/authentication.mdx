@@ -1,0 +1,200 @@
+---
+title: "Authentication"
+description: "Secure your API requests with proper authentication"
+icon: key
+---
+
+## API Authentication
+
+All Xerobi API requests require authentication to ensure security and proper access control. We support Bearer token authentication with API versioning.
+
+## Authentication Methods
+
+### Bearer Token Authentication
+
+Include your API key in the `Authorization` header using the Bearer scheme:
+
+```bash
+curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+
+<CodeGroup>
+```javascript JavaScript
+const response = await fetch('https://api.hixbe.com/payment/payment_intents', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Xerobi-Version': '2026-01-01',
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+```python Python
+import requests
+
+headers = {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Xerobi-Version': '2026-01-01',
+    'Content-Type': 'application/json'
+}
+
+response = requests.get('https://api.hixbe.com/payment/payment_intents', headers=headers)
+```
+
+```php PHP
+<?php
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_URL, 'https://api.hixbe.com/payment/payment_intents');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer YOUR_API_KEY',
+    'Xerobi-Version: 2026-01-01',
+    'Content-Type: application/json'
+]);
+
+$response = curl_exec($ch);
+curl_close($ch);
+?>
+```
+</CodeGroup>
+
+## API Keys
+
+### Types of API Keys
+
+- **Secret Keys**: Full access to all API operations. Keep these secure and never expose them in client-side code.
+- **Publishable Keys**: Limited access for client-side operations (e.g., payment form integration).
+- **Restricted Keys**: Scoped access with specific permissions and resource limitations.
+
+### Managing API Keys
+
+<Steps>
+<Step title="Access your dashboard">
+
+Log in to [dash.hixbe.com](https://dash.hixbe.com) and navigate to the API Keys section.
+
+</Step>
+
+<Step title="Create a new key">
+
+1. Click "Create API Key"
+2. Choose the key type (Secret, Publishable, or Restricted)
+3. Set permissions and restrictions if applicable
+4. Add a descriptive name for tracking
+
+</Step>
+
+<Step title="Secure your keys">
+
+- Store keys as environment variables
+- Use secret management services (AWS Secrets Manager, Azure Key Vault, etc.)
+- Rotate keys regularly
+- Never commit keys to version control
+
+</Step>
+</Steps>
+
+## API Versioning
+
+All requests must include the `Xerobi-Version` header to specify which API version to use:
+
+```bash
+-H "Xerobi-Version: 2026-01-01"
+```
+
+<Info>
+  **Current version**: `2026-01-01`
+
+  We recommend always specifying the latest version to access the newest features and improvements.
+</Info>
+
+## Security Best Practices
+
+### Key Security
+
+- Never expose secret keys in client-side code
+- Use environment variables for key storage
+- Rotate keys every 90 days
+- Monitor key usage in your dashboard
+- Use restricted keys when possible
+
+### Request Security
+
+- Always use HTTPS for all API requests
+- Validate SSL certificates
+- Implement proper error handling
+- Use idempotency keys for critical operations
+- Rate limit your requests appropriately
+
+### Environment Separation
+
+- Use separate API keys for sandbox and production
+- Test thoroughly in sandbox before going live
+- Implement environment-specific configurations
+- Use different subdomains for testing vs production
+
+## Authentication Errors
+
+### Common Error Codes
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `INVALID_API_KEY` | The provided API key is invalid | Check your API key and ensure it's correct |
+| `MISSING_AUTH_HEADER` | Authorization header is missing | Include the Authorization header with Bearer token |
+| `INSUFFICIENT_PERMISSIONS` | API key lacks required permissions | Create a key with appropriate permissions or contact support |
+| `EXPIRED_API_KEY` | The API key has expired | Generate a new API key in your dashboard |
+| `INVALID_VERSION` | Unsupported API version | Use a supported version (currently `2026-01-01`) |
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_API_KEY",
+    "message": "The API key provided is invalid",
+    "details": {
+      "provided_key_prefix": "sk_test_..."
+    }
+  }
+}
+```
+
+## Testing Authentication
+
+Use our sandbox environment to test authentication without affecting production data:
+
+```bash
+# Sandbox URL
+curl -X GET "https://sandbox.api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+
+<Note>
+  Sandbox and production use separate API keys and data. Always test authentication in sandbox first.
+</Note>
+
+## Need Help?
+
+<CardGroup cols={2}>
+<Card title="Troubleshooting" icon="wrench" href="/faq-guides/troubleshooting">
+Common authentication issues and solutions
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+Security and integration best practices
+</Card>
+
+<Card title="API Versioning" icon="tag" href="/faq-guides/versioning">
+Learn about API versioning requirements
+</Card>
+
+<Card title="Support" icon="life-ring" href="mailto:support@xerobi.com">
+Contact our support team
+</Card>
+</CardGroup>

@@ -1,0 +1,450 @@
+---
+title: DNS Service
+description: Secure DNS service with filtering and encryption options
+---
+
+# DNS Service
+
+Xerobi provides a comprehensive, secure DNS service offering standard DNS resolution, advanced content filtering, and multiple encrypted DNS protocols. Our enterprise-grade DNS infrastructure ensures fast, reliable, and secure domain name resolution with built-in threat protection and privacy features.
+
+## Server Details
+
+- **Primary Server**: `dns.hixbe.com`
+- **Secondary Server**: `dns2.hixbe.com`
+- **Technology**: Enterprise-grade DNS infrastructure
+- **Location**: Global (multiple geographic locations)
+- **Protocols**: DNS, DoH, DoT, DoQ
+- **Security**: End-to-end encryption, DNSSEC validation, threat intelligence
+
+## Security Features
+
+### Advanced Threat Protection
+
+Our DNS service includes multiple layers of security:
+
+- **Real-time Malware Blocking**: Blocks access to known malicious domains
+- **Phishing Protection**: Prevents users from accessing fraudulent websites
+- **Botnet Detection**: Identifies and blocks command-and-control servers
+- **Zero-Day Threat Intelligence**: Integration with global threat feeds
+- **DNSSEC Validation**: Cryptographic verification of DNS responses
+
+### Privacy & Encryption
+
+- **DNS over HTTPS (DoH)**: Encrypts all DNS queries using HTTPS
+- **DNS over TLS (DoT)**: Provides TLS-encrypted DNS resolution
+- **DNS over QUIC (DoQ)**: Ultra-fast encrypted DNS using QUIC protocol
+- **No Query Logging**: Minimal logging with automatic anonymization
+- **GDPR Compliant**: Strict privacy controls and data protection
+
+### Performance & Reliability
+
+- **Anycast Routing**: Global network with optimized routing paths
+- **99.9% Uptime SLA**: Guaranteed high availability
+- **Sub-millisecond Response Times**: Optimized for speed
+- **Automatic Failover**: Seamless redundancy across multiple data centers
+- **IPv4/IPv6 Dual Stack**: Full support for both protocol versions
+
+## DNS Services
+
+### Standard DNS (Port 53)
+
+Basic DNS resolution without filtering, providing fast and secure domain name resolution.
+
+**Server Addresses:**
+- IPv4: `165.101.132.104` (primary), `165.101.132.105` (secondary)
+- IPv6: `2001:4860:7:402::fd` (primary), `2001:4860:7:412::fd` (secondary)
+
+**Configuration Examples:**
+
+**Linux:**
+```bash
+# /etc/resolv.conf
+nameserver 165.101.132.104
+nameserver 165.101.132.105
+```
+
+**Windows:**
+```cmd
+netsh interface ip set dns "Ethernet" static 165.101.132.104
+netsh interface ip add dns "Ethernet" 165.101.132.105 index=2
+```
+
+**macOS:**
+```bash
+sudo networksetup -setdnsservers Wi-Fi 165.101.132.104 165.101.132.105
+```
+
+### Malware-Only Filtering (Port 54)
+
+Blocks malware domains while allowing adult content, providing essential security without content restrictions.
+
+**Server Addresses:**
+- IPv4: `165.101.132.104` (primary), `165.101.132.105` (secondary)
+- IPv6: `2001:4860:7:402::fd` (primary), `2001:4860:7:412::fd` (secondary)
+
+**Security Features:**
+- Real-time malware domain blocking
+- Phishing site protection
+- Botnet command-and-control server blocking
+- Known malicious host prevention
+- Zero-day threat detection
+
+### Malware + Adult Content Filtering (Port 55)
+
+Blocks both malware and adult content, providing comprehensive protection for sensitive environments.
+
+**Server Addresses:**
+- IPv4: `165.101.132.104` (primary), `165.101.132.105` (secondary)
+- IPv6: `2001:4860:7:402::fd` (primary), `2001:4860:7:412::fd` (secondary)
+
+**Security Features:**
+- All malware protection from port 54
+- Adult content website blocking
+- Gambling site restrictions
+- Pornographic content filtering
+- Comprehensive threat intelligence
+
+## Encrypted DNS
+
+### DNS over HTTPS (DoH)
+
+Secure DNS queries over HTTPS protocol.
+
+**Endpoint:** `https://dns.hixbe.com/dns-query`
+
+**Configuration:**
+
+**Firefox:**
+1. Go to `about:config`
+2. Set `network.trr.uri` to `https://dns.hixbe.com/dns-query`
+3. Set `network.trr.mode` to `2` (or `3` for TRR-only)
+
+**Chrome/Chromium:**
+```bash
+# Launch with DoH
+chromium --enable-features="dns-over-https" --dns-over-https-server="https://dns.hixbe.com/dns-query"
+```
+
+**curl:**
+```bash
+curl -H 'accept: application/dns-json' 'https://dns.hixbe.com/dns-query?name=example.com&type=A'
+```
+
+### DNS over TLS (DoT)
+
+Secure DNS queries over TLS protocol.
+
+**Server:** `dns.hixbe.com:853`
+
+**Configuration:**
+
+**Linux (systemd-resolved):**
+```bash
+# /etc/systemd/resolved.conf
+DNSOverTLS=yes
+DNS=1.1.1.1#dns.hixbe.com
+```
+
+**Android:**
+1. Go to Settings → Network & Internet → Advanced → Private DNS
+2. Select "Private DNS provider hostname"
+3. Enter: `dns.hixbe.com`
+
+**iOS:**
+1. Go to Settings → Wi-Fi → [Network Name]
+2. Configure DNS → Manual
+3. Add DNS server: `165.101.132.104`
+4. Enable DNS over TLS
+
+### DNS over QUIC (DoQ)
+
+Ultra-fast DNS queries over QUIC protocol.
+
+**Server:** `dns.hixbe.com:784`
+
+**Note:** DoQ support depends on client compatibility. Currently supported by some DNS clients and applications.
+
+## Programming Integration
+
+### Python
+
+```python
+import dns.resolver
+import dns.query
+import dns.message
+
+# Standard DNS query
+resolver = dns.resolver.Resolver()
+resolver.nameservers = ['165.101.132.104']
+
+try:
+    answers = resolver.resolve('example.com', 'A')
+    for rdata in answers:
+        print(f"IP: {rdata.address}")
+except dns.resolver.NXDOMAIN:
+    print("Domain not found")
+
+# DoH query
+import requests
+
+def doh_query(domain, qtype='A'):
+    url = f"https://dns.hixbe.com/dns-query"
+    headers = {'accept': 'application/dns-json'}
+    params = {'name': domain, 'type': qtype}
+
+    response = requests.get(url, headers=headers, params=params)
+    return response.json()
+
+result = doh_query('example.com')
+print(result)
+```
+
+### Node.js
+
+```javascript
+const dns = require('dns');
+const https = require('https');
+
+// Standard DNS
+dns.resolve('example.com', 'A', (err, addresses) => {
+  if (err) throw err;
+  console.log('Addresses:', addresses);
+});
+
+// DoH implementation
+function dohQuery(domain, type = 'A') {
+  const url = `https://dns.hixbe.com/dns-query?name=${domain}&type=${type}`;
+
+  https.get(url, { headers: { 'accept': 'application/dns-json' } }, (res) => {
+    let data = '';
+    res.on('data', (chunk) => data += chunk);
+    res.on('end', () => {
+      const result = JSON.parse(data);
+      console.log('DoH Result:', result);
+    });
+  });
+}
+
+dohQuery('example.com');
+```
+
+### Go
+
+```go
+package main
+
+import (
+    "fmt"
+    "net"
+    "context"
+
+    "github.com/miekg/dns"
+)
+
+func standardDNSQuery(domain string) {
+    // Standard DNS query
+    ips, err := net.LookupIP(domain)
+    if err != nil {
+        fmt.Printf("Lookup failed: %v\n", err)
+        return
+    }
+
+    for _, ip := range ips {
+        fmt.Printf("IP: %s\n", ip.String())
+    }
+}
+
+func customDNSQuery(domain string) {
+    // Custom DNS query with our servers
+    config := &dns.ClientConfig{
+        Servers: []string{"165.101.132.104"},
+        Port:    "53",
+    }
+
+    client := &dns.Client{}
+    message := &dns.Msg{}
+    message.SetQuestion(domain+".", dns.TypeA)
+
+    response, _, err := client.Exchange(message, net.JoinHostPort(config.Servers[0], config.Port))
+    if err != nil {
+        fmt.Printf("Query failed: %v\n", err)
+        return
+    }
+
+    for _, answer := range response.Answer {
+        if a, ok := answer.(*dns.A); ok {
+            fmt.Printf("A Record: %s\n", a.A.String())
+        }
+    }
+}
+
+func main() {
+    domain := "example.com"
+    standardDNSQuery(domain)
+    customDNSQuery(domain)
+}
+```
+
+## Threat Intelligence & Filtering
+
+### Advanced Malware Protection
+
+Our DNS service employs enterprise-grade threat intelligence to protect against various cyber threats:
+
+- **Global Threat Feeds**: Integration with leading cybersecurity intelligence providers
+- **Real-time Updates**: Blocklists updated every 15 minutes with latest threats
+- **Machine Learning**: AI-powered detection of emerging threats
+- **Zero-Day Protection**: Proactive blocking of unknown malicious domains
+- **Cryptojacking Prevention**: Blocks cryptocurrency mining malware
+
+### Content Security Filtering
+
+For environments requiring content restrictions:
+
+- **Malware Categories**: Viruses, trojans, ransomware distribution sites
+- **Phishing Domains**: Fake login pages and credential harvesting sites
+- **Botnet Infrastructure**: Command-and-control servers and malware hosting
+- **Exploit Kits**: Sites distributing browser and system exploits
+- **Malicious Downloads**: Sites hosting infected files and executables
+
+### Adult Content Protection
+
+Comprehensive filtering for sensitive environments:
+
+- **Pornographic Content**: Adult entertainment and explicit material
+- **Gambling Platforms**: Online casinos and betting websites
+- **Adult Services**: Escort services and adult-oriented businesses
+- **Explicit Media**: Sites hosting adult videos and images
+
+### Security Response
+
+- **Immediate Blocking**: New threats blocked within minutes of detection
+- **NXDOMAIN Responses**: Clean blocking without revealing filtering
+- **Audit Logging**: Comprehensive logging for security analysis
+- **False Positive Handling**: Quick resolution of incorrectly blocked domains
+- **Community Reporting**: User-submitted threat intelligence integration
+
+## Performance & Reliability
+
+### Speed Optimizations
+
+- **Anycast Routing**: Global network with optimized routing
+- **Caching**: Intelligent DNS caching with TTL respect
+- **CDN Integration**: Fast resolution for popular domains
+- **IPv6 Support**: Full IPv6 compatibility
+
+### Uptime & Monitoring
+
+- **99.9% Uptime SLA**: Guaranteed high availability
+- **Global Monitoring**: 24/7 monitoring from multiple locations
+- **Automatic Failover**: Seamless switching between servers
+- **Performance Metrics**: Real-time speed and reliability stats
+
+## Best Practices
+
+### For Applications
+
+1. **Use Appropriate Filtering**: Choose the right filtering level for your use case
+2. **Implement Fallbacks**: Always have secondary DNS servers configured
+3. **Monitor Resolution Times**: Track DNS query performance
+4. **Handle NXDOMAIN**: Properly handle blocked domain responses
+
+### For Networks
+
+1. **Split DNS**: Use different servers for different network segments
+2. **Conditional Forwarding**: Forward internal domains to local DNS
+3. **DNSSEC Validation**: Enable DNSSEC for enhanced security
+4. **Rate Limiting**: Implement query rate limits for protection
+
+### Security Considerations
+
+1. **Use Encrypted DNS**: Prefer DoH/DoT over plain DNS
+2. **Monitor for Anomalies**: Watch for unusual query patterns
+3. **Regular Updates**: Keep DNS configurations current
+4. **Access Controls**: Restrict DNS server access when possible
+
+## Troubleshooting
+
+### Common Issues
+
+**"DNS server not responding":**
+- Check network connectivity
+- Verify firewall settings (ports 53, 853, 443)
+- Try alternative DNS servers
+
+**Domains not resolving:**
+- Clear DNS cache: `ipconfig /flushdns` (Windows) or `sudo systemd-resolve --flush-caches` (Linux)
+- Check if domain is blocked by filtering
+- Verify DNS server configuration
+
+**Slow resolution:**
+- Test with different DNS servers
+- Check network latency to DNS servers
+- Verify DNS caching is working
+
+### Diagnostic Commands
+
+**Test DNS resolution:**
+```bash
+# Linux/macOS
+dig @165.101.132.104 example.com
+
+# Windows
+nslookup example.com 165.101.132.104
+```
+
+**Check DNSSEC:**
+```bash
+dig @165.101.132.104 example.com +dnssec
+```
+
+**Test DoH:**
+```bash
+curl -H 'accept: application/dns-json' 'https://dns.hixbe.com/dns-query?name=example.com&type=A'
+```
+
+## API Access
+
+For programmatic access to DNS data:
+
+```bash
+# Get DNS records
+curl "https://dns.hixbe.com/api/v1/resolve?name=example.com&type=A"
+
+# Check filtering status
+curl "https://dns.hixbe.com/api/v1/check?name=malicious.example.com"
+```
+
+## Terms of Service
+
+- **Free Usage**: DNS service provided free of charge
+- **Fair Usage**: Reasonable query limits apply
+- **No SLA**: Service provided "as is" without guarantee
+- **Logging**: Queries may be logged for service improvement
+- **No Warranty**: Service provided without warranty
+
+## Support
+
+For DNS service support:
+
+- **Email**: support@xerobi.com
+- **Status Page**: `https://status.hixbe.com/dns`
+- **Documentation**: Additional guides available
+- **Community**: Join our developer community
+
+---
+
+<CardGroup cols={2}>
+  <Card title="DNS over HTTPS" href="https://datatracker.ietf.org/doc/html/rfc8484">
+    DoH Protocol Specification
+  </Card>
+  <Card title="DNS over TLS" href="https://datatracker.ietf.org/doc/html/rfc7858">
+    DoT Protocol Specification
+  </Card>
+  <Card title="DNSSEC" href="https://www.dnssec.net">
+    DNS Security Extensions
+  </Card>
+  <Card title="DNS Security" href="/faq-guides/dns-security">
+    DNS Security Best Practices
+  </Card>
+</CardGroup>

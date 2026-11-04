@@ -1,0 +1,426 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions for Xerobi API integrations"
+icon: wrench
+---
+
+## Quick Issue Resolution
+
+Find solutions to the most common integration problems developers face with Xerobi APIs.
+
+## Authentication Issues
+
+### "INVALID_API_KEY" Error
+
+**Symptoms:**
+- All API requests return 401 Unauthorized
+- Error message: "The API key provided is invalid"
+
+**Solutions:**
+<Steps>
+<Step title="Check API key format">
+Ensure your API key starts with the correct prefix:
+- Secret keys: `sk_live_` or `sk_test_`
+- Publishable keys: `pk_live_` or `pk_test_`
+</Step>
+
+<Step title="Verify key is active">
+Log into your [dashboard](https://dash.hixbe.com) and check:
+- API key is not expired
+- API key has required permissions
+- Account is in good standing
+</Step>
+
+<Step title="Check environment">
+- Use sandbox keys for testing: `https://sandbox.api.hixbe.com`
+- Use production keys for live: `https://api.hixbe.com`
+</Step>
+</Steps>
+
+### "MISSING_AUTH_HEADER" Error
+
+**Symptoms:**
+- 401 error with message about missing authorization header
+
+**Common Causes:**
+- Authorization header not included
+- Incorrect header format
+- API key not properly encoded
+
+**Fix:**
+```bash
+# Correct format
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Xerobi-Version: 2026-01-01" \
+     https://api.hixbe.com/payment/payment_intents
+```
+
+### Version Header Missing
+
+**Symptoms:**
+- 400 Bad Request with "Xerobi-Version header is required"
+
+**Solution:**
+Always include the version header:
+```bash
+-H "Xerobi-Version: 2026-01-01"
+```
+
+## Request/Response Issues
+
+### "INVALID_REQUEST" Errors
+
+**Common Causes:**
+- Missing required fields
+- Incorrect field types
+- Malformed JSON
+
+**Debug Steps:**
+<Steps>
+<Step title="Validate JSON syntax">
+Use a JSON validator to check your request body
+</Step>
+
+<Step title="Check required fields">
+Review API documentation for mandatory fields
+</Step>
+
+<Step title="Verify field types">
+Ensure amounts are integers (cents), dates are ISO 8601 format
+</Step>
+</Steps>
+
+### Rate Limiting
+
+**Symptoms:**
+- 429 Too Many Requests
+- `RATE_LIMIT_EXCEEDED` error
+
+**Solutions:**
+```javascript
+// Implement exponential backoff
+async function makeRequestWithRetry(endpoint, data, attempt = 0) {
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { /* your headers */ },
+      body: JSON.stringify(data)
+    });
+
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('X-RateLimit-Retry-After');
+      const delay = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, attempt) * 1000;
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return makeRequestWithRetry(endpoint, data, attempt + 1);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Request failed:', error);
+    throw error;
+  }
+}
+```
+
+## Payment-Specific Issues
+
+### Payment Declines
+
+**Error Codes:**
+- `CARD_DECLINED`
+- `INSUFFICIENT_FUNDS`
+- `EXPIRED_CARD`
+
+**Troubleshooting:**
+- Verify card details are correct
+- Check card has sufficient funds
+- Ensure card is not expired
+- Try different card or payment method
+- Contact card issuer if issue persists
+
+### Webhook Delivery Issues
+
+**Symptoms:**
+- Webhooks not being received
+- Events not triggering in your application
+
+**Debug Checklist:**
+- Webhook URL is publicly accessible and uses HTTPS
+- Endpoint returns 200 status code within 10 seconds
+- Webhook signature verification is implemented
+- Firewall allows incoming POST requests
+- Endpoint can handle the expected payload size
+
+**Test Webhook:**
+```bash
+# Test with curl
+curl -X POST https://your-endpoint.com/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{"test": "webhook"}'
+```
+
+## SMS-Specific Issues
+
+### "INSUFFICIENT_BALANCE" Error
+
+**Solution:**
+<Steps>
+<Step title="Check balance">
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Xerobi-Version: 2026-01-01" \
+     https://api.hixbe.com/sms/balance
+```
+</Step>
+
+<Step title="Top up account">
+Log into dashboard and add credits
+</Step>
+
+<Step title="Set up balance alerts">
+Configure webhooks for low balance notifications
+</Step>
+</Steps>
+
+### Delivery Failures
+
+**Common Issues:**
+- Invalid phone number format
+- Recipient opted out of SMS
+- Carrier filtering
+- International routing issues
+
+**Validation:**
+```javascript
+function validatePhoneNumber(phone) {
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
+
+  // Check length (10-15 digits for international)
+  if (cleaned.length < 10 || cleaned.length > 15) {
+    return false;
+  }
+
+  // Should start with country code
+  return cleaned.length > 10;
+}
+```
+
+## Certification Issues
+
+### Credential Verification Failures
+
+**Symptoms:**
+- `VERIFICATION_FAILED` error
+- Credential appears invalid
+
+**Troubleshooting:**
+- Verify credential ID format
+- Check credential hasn't expired
+- Ensure issuer is trusted
+- Validate against original credential data
+- Check revocation status
+
+### Template Issues
+
+**Common Problems:**
+- Template not found
+- Invalid template data
+- Missing required fields
+
+**Solution:**
+List available templates first:
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Xerobi-Version: 2026-01-01" \
+     https://api.hixbe.com/certify/templates
+```
+
+## Network and Connectivity
+
+### Timeout Issues
+
+**Symptoms:**
+- Requests hang or timeout
+- Intermittent connection failures
+
+**Solutions:**
+- Increase timeout values (recommended: 30 seconds)
+- Implement retry logic with backoff
+- Check network connectivity
+- Verify DNS resolution
+- Use connection pooling for high traffic
+
+```javascript
+const client = new ApiClient({
+  timeout: 30000, // 30 seconds
+  retries: 3,
+  retryDelay: 1000
+});
+```
+
+### SSL/TLS Issues
+
+**Symptoms:**
+- SSL certificate verification errors
+- Connection refused on 443
+
+**Fixes:**
+- Ensure system has up-to-date CA certificates
+- Use TLS 1.2 or higher
+- Verify certificate is not expired
+- Check firewall allows HTTPS traffic
+
+## Development Environment Issues
+
+### Local Development Problems
+
+**Common Issues:**
+- CORS errors in browser
+- Localhost not accessible from external services
+- Environment variable issues
+
+**Solutions:**
+```bash
+# Use ngrok for local webhook testing
+npm install -g ngrok
+ngrok http 3000
+
+# Set environment variables
+export HIXBE_API_KEY=sk_test_...
+export HIXBE_VERSION=2026-01-01
+```
+
+### Sandbox vs Production
+
+**Configuration Differences:**
+| Setting | Sandbox | Production |
+|---------|---------|------------|
+| Base URL | `sandbox.api.hixbe.com` | `api.hixbe.com` |
+| API Keys | Test keys only | Live keys only |
+| Data | Isolated test data | Real production data |
+| Rate Limits | Higher limits | Standard limits |
+
+## Monitoring and Debugging
+
+### Enable Debug Logging
+
+```javascript
+const client = new HixbeClient({
+  apiKey: process.env.HIXBE_API_KEY,
+  debug: true, // Enable detailed logging
+  logger: console
+});
+```
+
+### Check API Status
+
+Visit [status.hixbe.com](https://status.hixbe.com) for real-time API status and incident reports.
+
+### Use Request IDs
+
+All API responses include an `X-Request-ID` header for tracking:
+
+```javascript
+const response = await fetch(endpoint, options);
+const requestId = response.headers.get('X-Request-ID');
+
+console.log(`Request ID: ${requestId}`); // Use for support tickets
+```
+
+## Getting Help
+
+### Support Resources
+
+<CardGroup cols={2}>
+<Card title="API Reference" icon="book">
+Complete API documentation with examples
+</Card>
+
+<Card title="Payment FAQ" icon="credit-card" href="/faq-guides/payment-api-faq">
+Payment-specific questions and solutions
+</Card>
+
+<Card title="SMS FAQ" icon="message" href="/faq-guides/sms-api-faq">
+SMS-specific questions and solutions
+</Card>
+
+<Card title="Certification FAQ" icon="certificate" href="/faq-guides/certification-api-faq">
+Certification-specific questions and solutions
+</Card>
+
+<Card title="Community Forum" icon="users">
+Connect with other developers
+</Card>
+
+<Card title="Status Page" icon="activity">
+Real-time API status and incidents
+</Card>
+
+<Card title="Support Ticket" icon="ticket">
+Submit detailed support requests
+</Card>
+</CardGroup>
+
+### When to Contact Support
+
+- Persistent authentication failures
+- Unexpected API behavior
+- Account or billing issues
+- Security concerns
+- Feature requests
+- Integration blockers
+
+### Support Request Template
+
+When contacting support, include:
+
+```
+Subject: [API] Issue with Payment Intent Creation
+
+Environment: Production/Sandbox
+API Version: 2026-01-01
+Request ID: req_1234567890
+Timestamp: 2025-12-03 10:30:00 UTC
+
+Description:
+[Describe the issue clearly]
+
+Steps to Reproduce:
+1. [Step 1]
+2. [Step 2]
+3. [Expected vs Actual behavior]
+
+Request Payload:
+[Include relevant API request]
+
+Response:
+[Include API response or error]
+
+Additional Context:
+[Any other relevant information]
+```
+
+## Prevention Best Practices
+
+- Test thoroughly in sandbox before production
+- Implement proper error handling and retries
+- Monitor API usage and error rates
+- Keep API keys secure and rotate regularly
+- Stay updated with API changes via changelog
+- Use the latest API version
+- Implement comprehensive logging
+
+## Still Having Issues?
+
+If you can't find a solution above:
+
+1. **Check the changelog** for recent changes
+2. **Review API documentation** for your specific use case
+3. **Test in sandbox** to isolate the issue
+4. **Contact support** with detailed information
+
+<Card title="Contact Support" icon="life-ring" href="mailto:support@xerobi.com">
+Get personalized help from our support team
+</Card>

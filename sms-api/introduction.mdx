@@ -1,0 +1,85 @@
+---
+title: Xerobi SMS Gateway API Introduction
+description: Xerobi SMS Gateway API - A modern, developer-friendly SMS Gateway API
+---
+
+> **Note**: This API supports transactional, OTP, promotional and bulk messaging with comprehensive delivery tracking.
+
+## Overview
+
+The Xerobi SMS Gateway API provides a comprehensive set of endpoints for sending SMS messages, managing sender IDs, creating message templates, and tracking delivery reports. The API supports multiple message types including OTP, transactional, and promotional messaging.
+
+## Authentication
+
+All requests require Bearer token authentication:
+
+```
+Authorization: Bearer sk_live_xxxxx
+```
+
+## Base URL
+
+Production: `https://api.hixbe.com/sms`
+
+## Versioning
+
+API versioning is handled via the `Xerobi-Version` header. Use `2026-01-01` for the latest version.
+
+Include this header in all API requests:
+
+```
+Xerobi-Version: 2026-01-01
+```
+
+## Key Features
+
+### Message Types
+- **OTP**: One-time passwords and verification codes
+- **Transactional**: Order confirmations, alerts, and notifications
+- **Promotional**: Marketing and promotional messages
+
+### Bulk Messaging
+Send messages to multiple recipients using CSV uploads or recipient lists.
+
+### Sender ID Management
+Register and manage custom sender IDs for branded messaging.
+
+### Message Templates
+Create reusable templates with variable substitution for consistent messaging.
+
+### Delivery Tracking
+Real-time delivery reports and webhook notifications.
+
+### Balance Management
+Check account balance and usage statistics.
+
+## Rate Limits
+
+- Single SMS: 100 requests per minute
+- Bulk SMS: 10 bulk jobs per hour
+- Account endpoints: 60 requests per hour
+
+## Message Length
+
+- Standard SMS: 160 characters (GSM-7) or 70 characters (UCS-2)
+- Concatenated SMS: Up to 1530 characters (GSM-7) or 670 characters (UCS-2)
+
+## Getting Started
+
+<CardGroup cols={2}>
+<Card title="Quickstart Guide" icon="rocket" href="/faq-guides/quickstart">
+Get started with your first SMS integration
+</Card>
+
+<Card title="SMS API FAQ" icon="message-circle" href="/faq-guides/sms-api-faq">
+Common questions and detailed guides
+</Card>
+
+<Card title="Authentication" icon="key" href="/faq-guides/authentication">
+Learn about API keys and security
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up SMS delivery notifications
+</Card>
+</CardGroup>

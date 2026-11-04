@@ -1,0 +1,1924 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Xerobi Speed Test API",
+    "description": "A comprehensive network speed testing API with advanced metrics, real-time progress tracking, result history, and comparative analysis.\n\n## Overview\n\nThe Xerobi Speed Test API provides powerful network performance testing capabilities:\n\n- **Basic Metrics**: Individual tests for ping, jitter, download, and upload speeds\n- **Advanced Tests**: Multi-file testing for more accurate measurements\n- **Full Speed Tests**: Comprehensive analysis with quality scoring\n- **Real-time Monitoring**: Server-Sent Events (SSE) for live progress tracking\n- **Historical Data**: Store and retrieve test results with statistics\n- **Comparative Analysis**: Compare results over time\n- **Server Selection**: Test against specific servers\n\n## Authentication\n\nMost endpoints require the `Xerobi-Version` header:\n\n```bash\ncurl -H \"Xerobi-Version: 2.0.0\" \\\n  https://api.hixbe.com/speedtest/full\n```\n\n**Exceptions**: The `/` (docs) and `/health` endpoints don't require this header.\n\n## Rate Limits\n\n- **Basic endpoints** (ping, download, upload): 60 requests/minute\n- **Full/Advanced tests**: 10 requests/minute\n- **Results/Stats endpoints**: 120 requests/minute\n\nRate limit information is included in response headers.\n\n## Test Result Storage\n\nResults from these endpoints are automatically stored:\n- `/ping` - Basic latency tests\n- `/download` - Download speed tests\n- `/upload` - Upload speed tests\n- `/full` - Comprehensive tests\n- `/advanced` - Advanced multi-file tests\n\nEach stored result receives a unique ID for later retrieval.\n\n## Quality Score Calculation\n\nThe quality score (0-100) is calculated based on:\n- **Ping** (30%): < 20ms = excellent, < 50ms = good, < 100ms = fair\n- **Jitter** (20%): < 5ms = excellent, < 15ms = good, < 30ms = fair\n- **Download** (25%): Relative to expected speeds\n- **Upload** (20%): Relative to expected speeds\n- **Packet Loss** (5%): 0% = perfect, < 1% = excellent, < 5% = acceptable\n\n## Server-Sent Events (SSE)\n\nThe `/stream` endpoint provides real-time progress updates:\n\n```javascript\nconst eventSource = new EventSource('/speedtest/stream', {\n  headers: { 'Xerobi-Version': '2.0.0' }\n});\n\neventSource.addEventListener('ping', (e) => {\n  const data = JSON.parse(e.data);\n  console.log('Ping:', data.result, 'ms');\n});\n\neventSource.addEventListener('finish', (e) => {\n  const data = JSON.parse(e.data);\n  console.log('Complete:', data.result);\n  eventSource.close();\n});\n```\n\n## Best Practices\n\n1. **Use appropriate test types**: Use basic tests for quick checks, advanced tests for accuracy\n2. **Handle rate limits**: Implement exponential backoff for retries\n3. **Store results**: Use result IDs to track performance over time\n4. **Compare wisely**: Use `/comparison` and `/stats` for trend analysis\n5. **Real-time updates**: Use `/stream` for UI progress indicators\n6. **Server selection**: Use `/servers` to find optimal test servers\n\n## Support\n\n- Website: https://hixbe.com\n- Documentation: https://docs.hixbe.com/speedtest\n- Status: https://status.hixbe.com",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Xerobi Support",
+      "url": "https://hixbe.com",
+      "email": "support@xerobi.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.hixbe.com/speedtest",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Information",
+      "description": "API information, documentation, and health checks"
+    },
+    {
+      "name": "Basic Metrics",
+      "description": "Individual speed test metrics (ping, jitter, download, upload)"
+    },
+    {
+      "name": "Advanced Tests",
+      "description": "Comprehensive and multi-file speed tests for accuracy"
+    },
+    {
+      "name": "Results & History",
+      "description": "Retrieve stored test results with filtering and statistics"
+    },
+    {
+      "name": "Real-time",
+      "description": "Real-time test monitoring via Server-Sent Events (SSE)"
+    },
+    {
+      "name": "Servers",
+      "description": "Test server management and selection"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Information"],
+        "summary": "API Documentation",
+        "description": "Returns comprehensive API documentation with all available endpoints, methods, and descriptions.\n\n**Note**: This endpoint does not require the Xerobi-Version header.",
+        "operationId": "getApiDocs",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved API documentation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiDocsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "name": "Xerobi Speed Test API",
+                    "version": "2.0.0",
+                    "description": "Comprehensive network speed testing API",
+                    "endpoints": [
+                      {
+                        "method": "GET",
+                        "path": "/health",
+                        "description": "Server health check"
+                      },
+                      {
+                        "method": "GET",
+                        "path": "/ping",
+                        "description": "Latency test"
+                      }
+                    ]
+                  },
+                  "executionTime": "2ms"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Information"],
+        "summary": "Health Check",
+        "description": "Returns server health status, uptime, memory usage, and total test count.\n\n**Use Cases:**\n- Monitor API availability\n- Track server performance\n- Verify connectivity before testing\n\n**Note**: This endpoint does not require the Xerobi-Version header.",
+        "operationId": "healthCheck",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server is healthy and operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "status": "healthy",
+                    "uptime": 3600,
+                    "memory": {
+                      "used": 45,
+                      "total": 256,
+                      "unit": "MB"
+                    },
+                    "totalTests": 42,
+                    "environment": "production"
+                  },
+                  "executionTime": "1ms"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "tags": ["Basic Metrics"],
+        "summary": "Latency Test",
+        "description": "Measures network latency (ping) to the test server. This is a single round-trip time measurement.\n\n**Use Cases:**\n- Quick latency check\n- Network responsiveness testing\n- Real-time gaming suitability\n\n**Result Storage**: This test result is automatically stored with a unique ID for historical analysis.\n\n**Typical Values:**\n- < 20ms: Excellent (local/CDN)\n- 20-50ms: Good (regional)\n- 50-100ms: Fair (cross-region)\n- > 100ms: Poor (high latency)",
+        "operationId": "getPing",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latency measurement completed successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests per minute",
+                "example": 60
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in current window",
+                "example": 59
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when limit resets",
+                "example": 1733569860
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "ping": 25.5,
+                    "unit": "ms",
+                    "id": 1
+                  },
+                  "executionTime": "26ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/jitter": {
+      "get": {
+        "tags": ["Basic Metrics"],
+        "summary": "Jitter Test",
+        "description": "Measures jitter (latency variance) by performing multiple ping tests and calculating the standard deviation.\n\n**What is Jitter?** Jitter is the variation in latency over time. High jitter causes packet delivery inconsistency.\n\n**Use Cases:**\n- VoIP quality assessment\n- Video conferencing suitability\n- Real-time application stability\n- Network stability testing\n\n**Measurement**: Performs 10 ping tests and calculates standard deviation.\n\n**Typical Values:**\n- < 5ms: Excellent (VoIP/gaming ready)\n- 5-15ms: Good (acceptable for most uses)\n- 15-30ms: Fair (may affect quality)\n- > 30ms: Poor (problematic for real-time apps)",
+        "operationId": "getJitter",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jitter measurement completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JitterResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "jitter": 2.3,
+                    "unit": "ms",
+                    "description": "Latency variance/jitter",
+                    "samples": 10
+                  },
+                  "executionTime": "150ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/latency": {
+      "get": {
+        "tags": ["Basic Metrics"],
+        "summary": "Comprehensive Latency Test",
+        "description": "Measures comprehensive latency statistics by running 20 ping tests and calculating percentiles.\n\n**Metrics Provided:**\n- **Average**: Mean latency across all samples\n- **Min/Max**: Range of observed latencies\n- **Median**: Middle value (50th percentile)\n- **P95**: 95th percentile - 95% of pings were faster\n- **P99**: 99th percentile - 99% of pings were faster\n\n**Use Cases:**\n- Detailed network analysis\n- SLA compliance verification\n- Performance trend analysis\n- Network troubleshooting\n\n**Why Percentiles Matter**: P95 and P99 show worst-case latency, important for user experience.",
+        "operationId": "getLatency",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comprehensive latency statistics completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatencyResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "latency": {
+                      "avg": 25.5,
+                      "min": 20.0,
+                      "max": 35.2,
+                      "median": 25.0,
+                      "p95": 32.5,
+                      "p99": 34.8,
+                      "samples": 20
+                    },
+                    "unit": "ms",
+                    "description": "Comprehensive latency statistics from 20 ping samples"
+                  },
+                  "executionTime": "350ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/download": {
+      "get": {
+        "tags": ["Basic Metrics"],
+        "summary": "Download Speed Test",
+        "description": "Measures download speed using a 10MB test file.\n\n**Use Cases:**\n- Quick download speed check\n- Bandwidth verification\n- ISP speed validation\n- Streaming capability assessment\n\n**Test Method**: Downloads a 10MB file and calculates speed based on transfer time.\n\n**Result Storage**: Automatically stored with unique ID.\n\n**Typical Speeds:**\n- **Fiber 100**: ~95 Mbps\n- **Fiber 500**: ~480 Mbps\n- **Fiber 1000**: ~950 Mbps\n- **Mobile 4G**: 10-50 Mbps\n- **Mobile 5G**: 100-1000 Mbps",
+        "operationId": "getDownload",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Download speed measurement completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "download": 95.42,
+                    "unit": "Mbps",
+                    "fileSize": "10MB",
+                    "id": 2
+                  },
+                  "executionTime": "850ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/download-advanced": {
+      "get": {
+        "tags": ["Advanced Tests"],
+        "summary": "Advanced Download Speed Test",
+        "description": "Measures download speed using multiple file sizes (1MB, 10MB, 50MB) for more accurate and comprehensive results.\n\n**Why Multi-File Testing?**\n- Small files test burst speed\n- Large files test sustained speed\n- Multiple samples reduce variance\n- Better representation of real-world usage\n\n**Use Cases:**\n- Detailed bandwidth analysis\n- Connection stability testing\n- Comparing different network conditions\n- Quality assurance testing\n\n**Files Tested:**\n- **1MB**: Tests initial connection and burst speed\n- **10MB**: Tests sustained performance\n- **50MB**: Tests long-duration stability\n\n**Note**: This test takes longer but provides more accurate results.",
+        "operationId": "getDownloadAdvanced",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Advanced download test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancedSpeedResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "average": 92.15,
+                    "detailed": [
+                      {
+                        "size": "1MB",
+                        "speed": 90.5,
+                        "duration": "88ms"
+                      },
+                      {
+                        "size": "10MB",
+                        "speed": 95.8,
+                        "duration": "835ms"
+                      },
+                      {
+                        "size": "50MB",
+                        "speed": 90.2,
+                        "duration": "4435ms"
+                      }
+                    ],
+                    "unit": "Mbps",
+                    "description": "Download speeds tested with multiple file sizes",
+                    "variance": 2.8
+                  },
+                  "executionTime": "5500ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/upload": {
+      "get": {
+        "tags": ["Basic Metrics"],
+        "summary": "Upload Speed Test",
+        "description": "Measures upload speed using a 1MB test file.\n\n**Use Cases:**\n- Upload bandwidth verification\n- Video streaming capability (Twitch, YouTube)\n- File sharing performance\n- Cloud backup speed assessment\n- Video conferencing quality check\n\n**Test Method**: Uploads 1MB of data and calculates speed based on transfer time.\n\n**Result Storage**: Automatically stored with unique ID.\n\n**Typical Speeds:**\n- **Fiber Symmetric**: Upload ≈ Download\n- **Cable/ADSL**: Upload = 10-20% of download\n- **Mobile 4G**: 5-25 Mbps\n- **Mobile 5G**: 20-100 Mbps",
+        "operationId": "getUpload",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload speed measurement completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "upload": 48.75,
+                    "unit": "Mbps",
+                    "fileSize": "1MB",
+                    "id": 3
+                  },
+                  "executionTime": "165ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/upload-advanced": {
+      "get": {
+        "tags": ["Advanced Tests"],
+        "summary": "Advanced Upload Speed Test",
+        "description": "Measures upload speed using multiple file sizes (1MB, 10MB, 50MB) for comprehensive analysis.\n\n**Benefits:**\n- Tests burst vs sustained upload speed\n- Identifies throttling or buffering issues\n- More accurate average calculation\n- Better real-world performance indication\n\n**Use Cases:**\n- Content creator bandwidth testing\n- Cloud service performance\n- Backup solution validation\n- Professional streaming setup",
+        "operationId": "getUploadAdvanced",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Advanced upload test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancedSpeedResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "average": 47.82,
+                    "detailed": [
+                      {
+                        "size": "1MB",
+                        "speed": 50.2,
+                        "duration": "159ms"
+                      },
+                      {
+                        "size": "10MB",
+                        "speed": 48.5,
+                        "duration": "1650ms"
+                      },
+                      {
+                        "size": "50MB",
+                        "speed": 44.8,
+                        "duration": "8930ms"
+                      }
+                    ],
+                    "unit": "Mbps",
+                    "description": "Upload speeds tested with multiple file sizes",
+                    "variance": 2.7
+                  },
+                  "executionTime": "11000ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/full": {
+      "get": {
+        "tags": ["Advanced Tests"],
+        "summary": "Full Speed Test",
+        "description": "Comprehensive speed test measuring all network metrics in a single test.\n\n**Metrics Measured:**\n1. **Ping**: Latency to server\n2. **Jitter**: Latency variance\n3. **Download**: Download bandwidth\n4. **Upload**: Upload bandwidth\n5. **Packet Loss**: Data transmission reliability\n6. **Quality Score**: Overall network quality (0-100)\n\n**Additional Data:**\n- Geographic location (country, region, coordinates)\n- Connection type detection\n- Timestamp for historical tracking\n\n**Use Cases:**\n- Complete network diagnostics\n- ISP performance validation\n- Troubleshooting connectivity issues\n- Network comparison over time\n- Customer support diagnostics\n\n**Result Storage**: Full test results are automatically stored.\n\n**Test Duration**: Approximately 10-15 seconds.",
+        "operationId": "runFullTest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full speed test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullTestResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "id": 10,
+                    "ping": {
+                      "value": 25.5,
+                      "unit": "ms"
+                    },
+                    "jitter": {
+                      "value": 2.3,
+                      "unit": "ms"
+                    },
+                    "download": {
+                      "value": 95.42,
+                      "unit": "Mbps"
+                    },
+                    "upload": {
+                      "value": 48.75,
+                      "unit": "Mbps"
+                    },
+                    "packetLoss": {
+                      "value": 0,
+                      "unit": "%"
+                    },
+                    "qualityScore": {
+                      "value": 92,
+                      "maxScore": 100,
+                      "rating": "Excellent"
+                    },
+                    "geo": {
+                      "country": "US",
+                      "region": "America/New_York",
+                      "latitude": 40.7128,
+                      "longitude": -74.006,
+                      "city": "New York"
+                    },
+                    "connectionType": "Fiber",
+                    "isp": "Xerobi Fiber"
+                  },
+                  "executionTime": "12500ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/advanced": {
+      "get": {
+        "tags": ["Advanced Tests"],
+        "summary": "Advanced Full Speed Test",
+        "description": "Most comprehensive speed test with multi-file analysis for maximum accuracy.\n\n**Features:**\n- All metrics from /full test\n- Multi-file download testing (1MB, 10MB, 50MB)\n- Multi-file upload testing (1MB, 10MB, 50MB)\n- Detailed breakdowns for each file size\n- Speed variance analysis\n- Enhanced quality scoring\n\n**Use Cases:**\n- Professional network auditing\n- SLA compliance verification\n- Detailed troubleshooting\n- Performance benchmarking\n- Research and analysis\n\n**Test Duration**: Approximately 20-30 seconds.\n\n**Note**: This is the most accurate but slowest test. Use /full for faster results.",
+        "operationId": "runAdvancedTest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Advanced test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancedTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/servers": {
+      "get": {
+        "tags": ["Servers"],
+        "summary": "List Speed Test Servers",
+        "description": "Returns all available speed test servers with location and latency information.\n\n**Use Cases:**\n- Find nearest/fastest server\n- Test against specific geographic locations\n- Compare performance across regions\n- Select optimal test server\n\n**Server Selection Tips:**\n- Choose nearest server for best case testing\n- Choose distant server for worst case testing\n- Test multiple servers for comprehensive analysis",
+        "operationId": "getServers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServersResponse"
+                },
+                "example": {
+                  "success": true,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "data": {
+                    "servers": [
+                      {
+                        "id": 1,
+                        "name": "Primary Test Server",
+                        "location": "New York, US",
+                        "region": "North America",
+                        "latency": "25ms",
+                        "available": true,
+                        "coordinates": {
+                          "latitude": 40.7128,
+                          "longitude": -74.006
+                        }
+                      },
+                      {
+                        "id": 2,
+                        "name": "EU Test Server",
+                        "location": "London, UK",
+                        "region": "Europe",
+                        "latency": "85ms",
+                        "available": true,
+                        "coordinates": {
+                          "latitude": 51.5074,
+                          "longitude": -0.1278
+                        }
+                      }
+                    ],
+                    "recommended": 1
+                  },
+                  "executionTime": "150ms"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/custom": {
+      "post": {
+        "tags": ["Servers"],
+        "summary": "Run Test on Custom Server",
+        "description": "Runs a full speed test against a specific test server.\n\n**Use Cases:**\n- Test performance to specific regions\n- Compare different server locations\n- Validate network routing\n- Geographic performance testing\n\n**Note**: Server must be available (check /servers endpoint first).",
+        "operationId": "runCustomTest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomTestRequest"
+              },
+              "example": {
+                "serverId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Custom server test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing serverId or invalid server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "error": {
+                    "code": "invalid_request",
+                    "message": "serverId is required",
+                    "type": "ValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Server not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "error": {
+                    "code": "not_found",
+                    "message": "Server with ID 999 not found",
+                    "type": "NotFoundError"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/results": {
+      "get": {
+        "tags": ["Results & History"],
+        "summary": "Get All Test Results",
+        "description": "Retrieves all stored test results with pagination support.\n\n**Features:**\n- Pagination via limit/offset\n- Total count included\n- Chronological ordering (newest first)\n- All test types included\n\n**Use Cases:**\n- View test history\n- Export historical data\n- Performance trend analysis\n- Generate reports\n\n**Filtering**: Use query parameters to limit results returned.",
+        "operationId": "getAllResults",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            },
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Filter results from this date (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2025-12-01T00:00:00Z"
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Filter results until this date (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2025-12-07T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/results/{id}": {
+      "get": {
+        "tags": ["Results & History"],
+        "summary": "Get Specific Test Result",
+        "description": "Retrieves detailed information for a specific test result by ID.\n\n**Use Cases:**\n- View individual test details\n- Link to specific test results\n- Compare specific tests\n- Retrieve test for reporting",
+        "operationId": "getResultById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Result ID (returned when test is performed)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Result not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "error": {
+                    "code": "not_found",
+                    "message": "Result with ID 999 not found",
+                    "type": "NotFoundError"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "tags": ["Results & History"],
+        "summary": "Get Speed Statistics",
+        "description": "Returns aggregate statistics for test results within a time range.\n\n**Statistics Provided:**\n- Average, min, max for each metric\n- Percentiles (P95, P99)\n- Total test count\n- Time range analyzed\n\n**Use Cases:**\n- Performance monitoring\n- SLA tracking\n- Trend analysis\n- Network health dashboards\n- Historical comparison\n\n**Time Range**: Defaults to last 60 minutes, configurable up to 30 days.",
+        "operationId": "getStats",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          },
+          {
+            "name": "timeRange",
+            "in": "query",
+            "description": "Time range for statistics in minutes",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 43200,
+              "default": 60
+            },
+            "example": 1440
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No results in time range or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "error": {
+                    "code": "no_data",
+                    "message": "No results found in the last 60 minutes",
+                    "type": "ValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/comparison": {
+      "get": {
+        "tags": ["Results & History"],
+        "summary": "Compare Test Results",
+        "description": "Compares the latest test result with the previous one, showing differences and percentage changes.\n\n**Comparison Metrics:**\n- Absolute difference between tests\n- Percentage change\n- Improvement/degradation indicators\n- Side-by-side values\n\n**Use Cases:**\n- Track performance changes\n- Identify network degradation\n- Verify improvements after changes\n- Monitor consistency\n\n**Requirements**: At least 2 test results must exist.",
+        "operationId": "compareResults",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comparison retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not enough results for comparison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "timestamp": "2025-12-07T10:30:00.000Z",
+                  "error": {
+                    "code": "insufficient_data",
+                    "message": "Need at least 2 test results for comparison",
+                    "type": "ValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/stream": {
+      "get": {
+        "tags": ["Real-time"],
+        "summary": "Real-time Test Stream",
+        "description": "Server-Sent Events (SSE) endpoint that streams real-time progress updates during a full speed test.\n\n**Event Types:**\n- `ping`: Ping test starting/completed\n- `jitter`: Jitter test completed\n- `download`: Download test starting/completed\n- `upload`: Upload test starting/completed\n- `finish`: Test completed with all results\n- `error`: Test failed with error details\n\n**Event Data:**\n- `status`: Test phase status (starting/completed)\n- `result`: Test result value\n- `progress`: Overall test progress (0-100%)\n\n**Implementation Example:**\n```javascript\nconst eventSource = new EventSource(\n  'https://api.hixbe.com/speedtest/stream',\n  { headers: { 'Xerobi-Version': '2.0.0' } }\n);\n\neventSource.addEventListener('ping', (e) => {\n  const data = JSON.parse(e.data);\n  console.log('Ping:', data.result, 'ms');\n  updateProgress(data.progress);\n});\n\neventSource.addEventListener('finish', (e) => {\n  const data = JSON.parse(e.data);\n  console.log('Complete:', data.result);\n  eventSource.close();\n});\n\neventSource.addEventListener('error', (e) => {\n  console.error('Error:', e.data);\n  eventSource.close();\n});\n```\n\n**Use Cases:**\n- Real-time UI updates\n- Progress bars\n- Live test monitoring\n- Interactive dashboards\n\n**Note**: Keep connection open until 'finish' or 'error' event received.",
+        "operationId": "streamTest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HixbeVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream connection established",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "object",
+                  "description": "Server-Sent Events stream with test progress",
+                  "properties": {
+                    "event": {
+                      "type": "string",
+                      "enum": ["ping", "jitter", "download", "upload", "finish", "error"]
+                    },
+                    "data": {
+                      "type": "string",
+                      "description": "JSON-encoded event data"
+                    }
+                  }
+                },
+                "examples": {
+                  "pingStart": {
+                    "summary": "Ping test starting",
+                    "value": "event: ping\ndata: {\"status\":\"starting\",\"progress\":10}\n\n"
+                  },
+                  "pingComplete": {
+                    "summary": "Ping test completed",
+                    "value": "event: ping\ndata: {\"result\":25.5,\"progress\":20}\n\n"
+                  },
+                  "downloadStart": {
+                    "summary": "Download test starting",
+                    "value": "event: download\ndata: {\"status\":\"starting\",\"progress\":40}\n\n"
+                  },
+                  "finish": {
+                    "summary": "Test completed",
+                    "value": "event: finish\ndata: {\"result\":{\"ping\":25.5,\"jitter\":2.3,\"download\":95.42,\"upload\":48.75,\"qualityScore\":92},\"progress\":100}\n\n"
+                  },
+                  "error": {
+                    "summary": "Test failed",
+                    "value": "event: error\ndata: {\"error\":\"Test timeout\",\"progress\":50}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingVersionHeader"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "HixbeVersion": {
+        "name": "Xerobi-Version",
+        "in": "header",
+        "description": "API version header. Required for all endpoints except / and /health",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "example": "2.0.0"
+        }
+      }
+    },
+    "schemas": {
+      "ApiDocsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "Xerobi Speed Test API"
+              },
+              "version": {
+                "type": "string",
+                "example": "2.0.0"
+              },
+              "description": {
+                "type": "string"
+              },
+              "endpoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "enum": ["GET", "POST"]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "executionTime": {
+            "type": "string",
+            "description": "Request execution time"
+          }
+        },
+        "required": ["success", "timestamp", "data"]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["healthy", "degraded", "down"],
+                "example": "healthy"
+              },
+              "uptime": {
+                "type": "number",
+                "description": "Server uptime in seconds",
+                "example": 3600
+              },
+              "memory": {
+                "type": "object",
+                "properties": {
+                  "used": {
+                    "type": "number",
+                    "description": "Used heap memory",
+                    "example": 45
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "Total heap memory",
+                    "example": 256
+                  },
+                  "unit": {
+                    "type": "string",
+                    "example": "MB"
+                  }
+                }
+              },
+              "totalTests": {
+                "type": "integer",
+                "description": "Total number of tests performed",
+                "example": 42,
+                "minimum": 0
+              },
+              "environment": {
+                "type": "string",
+                "example": "production"
+              }
+            },
+            "required": ["status", "uptime", "memory", "totalTests"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        },
+        "required": ["success", "timestamp", "data"]
+      },
+      "PingResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "ping": {
+                "type": "number",
+                "description": "Latency in milliseconds",
+                "example": 25.5,
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["ms"],
+                "example": "ms"
+              },
+              "id": {
+                "type": "integer",
+                "description": "Result ID for historical retrieval",
+                "example": 1
+              }
+            },
+            "required": ["ping", "unit", "id"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        },
+        "required": ["success", "timestamp", "data"]
+      },
+      "JitterResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "jitter": {
+                "type": "number",
+                "description": "Jitter/latency variance in milliseconds",
+                "example": 2.3,
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["ms"]
+              },
+              "description": {
+                "type": "string",
+                "example": "Latency variance/jitter"
+              },
+              "samples": {
+                "type": "integer",
+                "description": "Number of samples used",
+                "example": 10,
+                "minimum": 1
+              }
+            },
+            "required": ["jitter", "unit"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "LatencyResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "latency": {
+                "type": "object",
+                "properties": {
+                  "avg": {
+                    "type": "number",
+                    "example": 25.5
+                  },
+                  "min": {
+                    "type": "number",
+                    "example": 20.0
+                  },
+                  "max": {
+                    "type": "number",
+                    "example": 35.2
+                  },
+                  "median": {
+                    "type": "number",
+                    "example": 25.0
+                  },
+                  "p95": {
+                    "type": "number",
+                    "description": "95th percentile",
+                    "example": 32.5
+                  },
+                  "p99": {
+                    "type": "number",
+                    "description": "99th percentile",
+                    "example": 34.8
+                  },
+                  "samples": {
+                    "type": "integer",
+                    "example": 20
+                  }
+                },
+                "required": ["avg", "min", "max", "median", "samples"]
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["ms"]
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": ["latency", "unit"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "DownloadResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "download": {
+                "type": "number",
+                "description": "Download speed in Mbps",
+                "example": 95.42,
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["Mbps"]
+              },
+              "fileSize": {
+                "type": "string",
+                "example": "10MB"
+              },
+              "id": {
+                "type": "integer",
+                "example": 2
+              }
+            },
+            "required": ["download", "unit", "id"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "upload": {
+                "type": "number",
+                "description": "Upload speed in Mbps",
+                "example": 48.75,
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["Mbps"]
+              },
+              "fileSize": {
+                "type": "string",
+                "example": "1MB"
+              },
+              "id": {
+                "type": "integer",
+                "example": 3
+              }
+            },
+            "required": ["upload", "unit", "id"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "AdvancedSpeedResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "average": {
+                "type": "number",
+                "description": "Average speed across all file sizes",
+                "example": 92.15
+              },
+              "detailed": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "size": {
+                      "type": "string",
+                      "example": "1MB"
+                    },
+                    "speed": {
+                      "type": "number",
+                      "example": 90.5
+                    },
+                    "duration": {
+                      "type": "string",
+                      "example": "88ms"
+                    }
+                  }
+                }
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["Mbps"]
+              },
+              "description": {
+                "type": "string"
+              },
+              "variance": {
+                "type": "number",
+                "description": "Speed variance across tests",
+                "example": 2.8
+              }
+            },
+            "required": ["average", "detailed", "unit"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "FullTestResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 10
+              },
+              "ping": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "jitter": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "download": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "upload": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "packetLoss": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": ["%"]
+                  }
+                }
+              },
+              "qualityScore": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "maxScore": {
+                    "type": "integer",
+                    "example": 100
+                  },
+                  "rating": {
+                    "type": "string",
+                    "enum": ["Excellent", "Good", "Fair", "Poor"]
+                  }
+                }
+              },
+              "geo": {
+                "type": "object",
+                "properties": {
+                  "country": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "nullable": true
+                  }
+                }
+              },
+              "connectionType": {
+                "type": "string",
+                "example": "Fiber"
+              },
+              "isp": {
+                "type": "string",
+                "example": "Xerobi Fiber"
+              }
+            },
+            "required": ["id", "ping", "download", "upload", "qualityScore"]
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "AdvancedTestResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FullTestResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "download": {
+                    "type": "object",
+                    "properties": {
+                      "average": {
+                        "type": "object"
+                      },
+                      "detailed": {
+                        "type": "array"
+                      }
+                    }
+                  },
+                  "upload": {
+                    "type": "object",
+                    "properties": {
+                      "average": {
+                        "type": "object"
+                      },
+                      "detailed": {
+                        "type": "array"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ServersResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "servers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "region": {
+                      "type": "string"
+                    },
+                    "latency": {
+                      "type": "string"
+                    },
+                    "available": {
+                      "type": "boolean"
+                    },
+                    "coordinates": {
+                      "type": "object",
+                      "properties": {
+                        "latitude": {
+                          "type": "number"
+                        },
+                        "longitude": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "recommended": {
+                "type": "integer",
+                "description": "Recommended server ID based on location"
+              }
+            }
+          },
+          "executionTime": {
+            "type": "string"
+          }
+        }
+      },
+      "CustomTestRequest": {
+        "type": "object",
+        "properties": {
+          "serverId": {
+            "type": "integer",
+            "description": "ID of the test server to use",
+            "example": 1,
+            "minimum": 1
+          }
+        },
+        "required": ["serverId"]
+      },
+      "ResultsListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResult"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "pages": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "StatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "ping": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  },
+                  "avg": {
+                    "type": "number"
+                  }
+                }
+              },
+              "download": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  },
+                  "avg": {
+                    "type": "number"
+                  }
+                }
+              },
+              "upload": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  },
+                  "avg": {
+                    "type": "number"
+                  }
+                }
+              },
+              "totalTests": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "ComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TestResult"
+                }
+              },
+              "analysis": {
+                "type": "object",
+                "properties": {
+                  "improvement": {
+                    "type": "number"
+                  },
+                  "trend": {
+                    "type": "string",
+                    "enum": ["improving", "declining", "stable"]
+                  },
+                  "averageQualityScore": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "INVALID_REQUEST"
+              },
+              "message": {
+                "type": "string",
+                "example": "Invalid request parameters"
+              },
+              "details": {
+                "type": "object",
+                "nullable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "MissingVersionHeader": {
+        "description": "Missing Xerobi-Version header",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

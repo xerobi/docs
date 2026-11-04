@@ -1,0 +1,284 @@
+---
+title: Speed Test Server
+description: Ookla Speedtest server provided by Xerobi for internet speed testing
+---
+
+# Speed Test Server
+
+Xerobi provides a free Ookla Speedtest server to help users and developers test their internet connection speeds accurately and reliably.
+
+## Server Details
+
+- **Server ID**: [Your Server ID]
+- **Hostname**: `speedtest.hixbe.com`
+- **Location**: [Your Server Location]
+- **Provider**: Xerobi
+- **Technology**: Ookla Speedtest
+- **Protocol**: HTTP/HTTPS
+
+## How Speedtest Works
+
+Ookla Speedtest measures your internet connection's:
+- **Download Speed**: How fast data downloads to your device
+- **Upload Speed**: How fast data uploads from your device
+- **Ping/Latency**: Response time in milliseconds
+- **Jitter**: Variation in ping/latency
+
+## Using the Speedtest Server
+
+### Web Interface
+
+Visit our speed test page at `https://speedtest.hixbe.com` to run a speed test directly in your browser.
+
+### Command Line Tools
+
+**Ookla Speedtest CLI:**
+
+```bash
+# Install Speedtest CLI
+# Linux
+curl -s https://install.speedtest.net/app/cli/install.deb.sh | sudo bash
+sudo apt-get install speedtest
+
+# macOS
+brew tap teamookla/speedtest
+brew update
+brew install speedtest
+
+# Windows (PowerShell as Admin)
+winget install -e --id Ookla.Speedtest.CLI
+
+# Run speed test against our server
+speedtest --server-id=[YOUR_SERVER_ID]
+```
+
+**Alternative: Fast CLI**
+
+```bash
+# Install fast-cli
+npm install -g fast-cli
+
+# Run speed test
+fast
+```
+
+### Programming Integration
+
+**Python with speedtest-cli:**
+
+```python
+import speedtest
+
+# Create speedtest object
+st = speedtest.Speedtest()
+
+# Find and select our server
+st.get_servers(['[YOUR_SERVER_ID]'])
+st.get_best_server()
+
+# Run download test
+download_speed = st.download()
+print(f"Download: {download_speed / 1024 / 1024:.2f} Mbps")
+
+# Run upload test
+upload_speed = st.upload()
+print(f"Upload: {upload_speed / 1024 / 1024:.2f} Mbps")
+
+# Get ping
+ping = st.results.ping
+print(f"Ping: {ping} ms")
+```
+
+**Node.js:**
+
+```javascript
+const speedTest = require('speedtest-net');
+
+async function runSpeedTest() {
+  try {
+    console.log('Running speed test...');
+    const result = await speedTest({ serverId: '[YOUR_SERVER_ID]' });
+
+    console.log(`Download: ${result.download.bandwidth / 125000} Mbps`);
+    console.log(`Upload: ${result.upload.bandwidth / 125000} Mbps`);
+    console.log(`Ping: ${result.ping.latency} ms`);
+  } catch (err) {
+    console.error('Speed test failed:', err.message);
+  }
+}
+
+runSpeedTest();
+```
+
+**Go:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/showwin/speedtest-go"
+)
+
+func main() {
+    // Create speedtest client
+    client := speedtest.New()
+
+    // Get server list
+    serverList, err := client.FetchServers()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Find our server by ID
+    targetServer := serverList.FindByID("[YOUR_SERVER_ID]")
+    if targetServer == nil {
+        log.Fatal("Server not found")
+    }
+
+    // Run download test
+    targetServer.DownloadTest(false)
+    fmt.Printf("Download: %.2f Mbps\n", targetServer.DLSpeed)
+
+    // Run upload test
+    targetServer.UploadTest(false)
+    fmt.Printf("Upload: %.2f Mbps\n", targetServer.ULSpeed)
+
+    // Get ping
+    fmt.Printf("Ping: %.2f ms\n", targetServer.Latency)
+}
+```
+
+## API Integration
+
+For applications that need to integrate speed testing programmatically, you can use the Ookla Speedtest API or third-party libraries.
+
+### REST API Example
+
+```bash
+# Get server list
+curl -s "https://www.speedtest.net/api/js/servers" | jq '.[] | select(.id == "[YOUR_SERVER_ID]")'
+
+# Run speed test (requires authentication)
+curl -X POST "https://www.speedtest.net/api/api.php" \
+  -d "server_id=[YOUR_SERVER_ID]" \
+  -d "ping=1" \
+  -d "download=1" \
+  -d "upload=1"
+```
+
+## Best Practices
+
+### For Accurate Results
+
+1. **Close Background Applications**: Ensure no other applications are using bandwidth
+2. **Use Wired Connection**: Ethernet provides more consistent results than Wi-Fi
+3. **Test Multiple Times**: Run tests at different times of day
+4. **Check Server Distance**: Closer servers generally provide more accurate results
+5. **Avoid Peak Hours**: Test during off-peak hours for best results
+
+### For Development
+
+1. **Implement Retry Logic**: Speed tests can occasionally fail
+2. **Add Timeouts**: Set reasonable timeouts for test operations
+3. **Handle Errors Gracefully**: Network issues can cause test failures
+4. **Cache Results**: Don't run tests too frequently
+5. **User Consent**: Always get user permission before running speed tests
+
+## Troubleshooting
+
+### Common Issues
+
+**"Server not found" Error:**
+- Verify the server ID is correct
+- Check if the server is currently online
+- Try a different server
+
+**Inconsistent Results:**
+- Close bandwidth-intensive applications
+- Test during off-peak hours
+- Use a wired connection instead of Wi-Fi
+
+**Slow Speeds:**
+- Check your ISP's speed plan
+- Test against multiple servers
+- Verify no throttling is occurring
+
+### Server Status
+
+You can check our speed test server status:
+- **Server Status**: `https://speedtest.hixbe.com/status`
+- **Ookla Status Page**: `https://status.ookla.com`
+
+## Integration Examples
+
+### Web Application
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speed Test</title>
+    <script src="https://speedtest.hixbe.com/speedtest.js"></script>
+</head>
+<body>
+    <div id="speedtest"></div>
+    <script>
+        // Initialize speed test
+        const speedtest = new Speedtest();
+        speedtest.setParameter("server_id", "[YOUR_SERVER_ID]");
+
+        // Run test
+        speedtest.onupdate = function(data) {
+            document.getElementById('speedtest').innerHTML =
+                `Download: ${data.download} Mbps<br>
+                 Upload: ${data.upload} Mbps<br>
+                 Ping: ${data.ping} ms`;
+        };
+
+        speedtest.start();
+    </script>
+</body>
+</html>
+```
+
+### Mobile App Integration
+
+For mobile applications, consider using:
+- **iOS**: `Speedtest-iOS` framework
+- **Android**: `Speedtest-Android` library
+- **React Native**: `react-native-speedtest` package
+
+## Terms of Service
+
+- **Free Usage**: Speed test server is provided free of charge
+- **Fair Usage**: Please respect reasonable usage limits
+- **No SLA**: Service provided "as is" without service level agreement
+- **Data Privacy**: Test results are not stored or shared
+
+## Support
+
+For technical support or questions:
+
+- **Email**: support@xerobi.com
+- **Documentation**: Check our [NTP Servers](/more/ntp-servers) and [Time Synchronization FAQ](/faq-guides/time-synchronization)
+- **Ookla Support**: Visit `https://www.speedtest.net/help`
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Ookla Speedtest" href="https://www.speedtest.net">
+    Official Speedtest website
+  </Card>
+  <Card title="Speedtest CLI" href="https://www.speedtest.net/apps/cli">
+    Command line speed testing tool
+  </Card>
+  <Card title="Speedtest API" href="https://www.speedtest.net/api">
+    Developer API documentation
+  </Card>
+  <Card title="Network Diagnostics" href="/faq-guides/network-diagnostics">
+    Network troubleshooting guide
+  </Card>
+</CardGroup>

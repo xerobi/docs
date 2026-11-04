@@ -1,53 +1,352 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "theme": "aspen",
+  "name": "Xerobi Developer Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#0075de",
+    "light": "#0075de",
+    "dark": "#0075de"
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "tab": "FAQ & Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "faq-guides/quickstart",
+              "faq-guides/authentication",
+              "faq-guides/versioning"
+            ]
+          },
+          {
+            "group": "Integration Guides",
+            "pages": [
+              "faq-guides/webhooks",
+              "faq-guides/error-handling",
+              "faq-guides/best-practices"
+            ]
+          },
+          {
+            "group": "API FAQs",
+            "pages": [
+              "faq-guides/payment-api-faq",
+              "faq-guides/sms-api-faq",
+              "faq-guides/certification-api-faq",
+              "faq-guides/time-synchronization",
+              "faq-guides/dns-security",
+              "faq-guides/content-filtering"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Payment Gateway",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "payment-api/introduction"
+            ]
+          },
+          {
+            "group": "Payment Intents",
+            "pages": [
+              "payment-api/endpoint/create-payment-intent",
+              "payment-api/endpoint/list-payment-intents",
+              "payment-api/endpoint/retrieve-payment-intent",
+              "payment-api/endpoint/attach-payment-method-to-intent",
+              "payment-api/endpoint/confirm-payment-intent"
+            ]
+          },
+          {
+            "group": "Payment Methods",
+            "pages": [
+              "payment-api/endpoint/create-payment-method",
+              "payment-api/endpoint/retrieve-payment-method"
+            ]
+          },
+          {
+            "group": "Customers",
+            "pages": [
+              "payment-api/endpoint/create-customer",
+              "payment-api/endpoint/list-customers",
+              "payment-api/endpoint/retrieve-customer",
+              "payment-api/endpoint/attach-payment-method-to-customer"
+            ]
+          },
+          {
+            "group": "Refunds",
+            "pages": [
+              "payment-api/endpoint/create-refund",
+              "payment-api/endpoint/retrieve-refund"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "payment-api/endpoint/create-webhook-endpoint",
+              "payment-api/endpoint/list-webhook-endpoints",
+              "payment-api/endpoint/list-event-deliveries"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "payment-api/endpoint/get-request-trace"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SMS Gateway",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "sms-api/introduction"
+            ]
+          },
+          {
+            "group": "SMS Operations",
+            "pages": [
+              "sms-api/endpoint/send-sms",
+              "sms-api/endpoint/send-bulk-sms",
+              "sms-api/endpoint/get-bulk-job",
+              "sms-api/endpoint/list-messages",
+              "sms-api/endpoint/get-message"
+            ]
+          },
+          {
+            "group": "Senders",
+            "pages": [
+              "sms-api/endpoint/list-senders",
+              "sms-api/endpoint/request-sender-id"
+            ]
+          },
+          {
+            "group": "Templates",
+            "pages": [
+              "sms-api/endpoint/list-templates",
+              "sms-api/endpoint/create-template",
+              "sms-api/endpoint/send-template"
+            ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "sms-api/endpoint/get-balance",
+              "sms-api/endpoint/get-usage-report"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "sms-api/endpoint/list-webhooks",
+              "sms-api/endpoint/register-webhook",
+              "sms-api/endpoint/get-webhook",
+              "sms-api/endpoint/update-webhook",
+              "sms-api/endpoint/delete-webhook"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Certification & Badge",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "certify-api/introduction"
+            ]
+          },
+          {
+            "group": "Templates",
+            "pages": [
+              "certify-api/endpoint/list-templates",
+              "certify-api/endpoint/create-template"
+            ]
+          },
+          {
+            "group": "Credentials",
+            "pages": [
+              "certify-api/endpoint/list-credentials",
+              "certify-api/endpoint/issue-credential",
+              "certify-api/endpoint/verify-credential",
+              "certify-api/endpoint/revoke-credential"
+            ]
+          },
+          {
+            "group": "Badges",
+            "pages": [
+              "certify-api/endpoint/list-badges",
+              "certify-api/endpoint/create-badge"
+            ]
+          },
+          {
+            "group": "Programs",
+            "pages": [
+              "certify-api/endpoint/list-programs",
+              "certify-api/endpoint/create-program"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "certify-api/endpoint/create-webhook"
+            ]
+          },
+          {
+            "group": "Audit",
+            "pages": [
+              "certify-api/endpoint/list-audit-logs"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Network API",
+        "groups": [
+          {
+            "group": "Network API",
+            "pages": [
+              "network-api/introduction"
+            ]
+          },
+          {
+            "group": "Consumer",
+            "pages": [
+              "network-api/endpoint/get-consumer-network",
+              "network-api/endpoint/get-consumer-account",
+              "network-api/endpoint/get-consumer-usage",
+              "network-api/endpoint/get-speedtest-config"
+            ]
+          },
+          {
+            "group": "Business",
+            "pages": [
+              "network-api/endpoint/list-business-ip-assignments",
+              "network-api/endpoint/get-business-bandwidth-usage"
+            ]
+          },
+          {
+            "group": "RPKI",
+            "pages": [
+              "rpki-api/introduction"
+            ]
+          },
+          {
+            "group": "Route Validation",
+            "pages": [
+              "rpki-api/endpoint/check-validity-path",
+              "rpki-api/endpoint/check-validity-query",
+              "rpki-api/endpoint/validate-routes"
+            ]
+          },
+          {
+            "group": "Status & Monitoring",
+            "pages": [
+              "rpki-api/endpoint/get-status",
+              "rpki-api/endpoint/get-service-status",
+              "rpki-api/endpoint/get-version",
+              "rpki-api/endpoint/get-log",
+              "rpki-api/endpoint/get-metrics"
+            ]
+          },
+          {
+            "group": "Delta Updates",
+            "pages": [
+              "rpki-api/endpoint/get-json-delta",
+              "rpki-api/endpoint/get-delta-notify"
+            ]
+          },
+          {
+            "group": "Speed Test API",
+            "pages": [
+              "speed-api/introduction",
+              "speed-api/endpoint/health-check",
+              "speed-api/endpoint/latency-test",
+              "speed-api/endpoint/jitter-test",
+              "speed-api/endpoint/latency-variance",
+              "speed-api/endpoint/download-test",
+              "speed-api/endpoint/upload-test",
+              "speed-api/endpoint/advanced-download",
+              "speed-api/endpoint/advanced-upload",
+              "speed-api/endpoint/full-test",
+              "speed-api/endpoint/advanced-test",
+              "speed-api/endpoint/custom-test",
+              "speed-api/endpoint/list-servers",
+              "speed-api/endpoint/list-results",
+              "speed-api/endpoint/get-result",
+              "speed-api/endpoint/get-statistics",
+              "speed-api/endpoint/comparison-report",
+              "speed-api/endpoint/realtime-stream"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "More",
+        "groups": [
+          {
+            "group": "Services",
+            "pages": [
+              "more/ntp-servers",
+              "more/speed-test",
+              "more/dns-service"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Updates",
+            "pages": [
+              "changelog"
+            ]
+          }
         ]
       }
     ],
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Blog",
+          "href": "https://blog.xerobi.com/",
+          "icon": "newspaper"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "https://support.xerobi.com/",
+          "icon": "hand-helping"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/logo-dark.svg",
+    "dark": "/logo/logo-light.svg"
+  },
+  "fonts": {
+    "family": "Inter",
+    "weight": 500
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "label": "Visit Site",
+      "href": "https://www.xerobi.com"
     }
   },
   "contextual": {
@@ -56,17 +355,35 @@
       "view",
       "chatgpt",
       "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
+      "mcp"
     ]
+  },
+  "errors": {
+    "404": {
+      "redirect": false,
+      "title": "I can't be found",
+      "description": "What ever **happened** to this _page_?"
+    }
+  },
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-NSSGLJ96"
+    }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/xerobihq",
+      "github": "https://github.com/xerobi",
+      "linkedin": "https://linkedin.com/company/xerobi"
+    },
+    "links": [
+    {
+      "header": "Company",
+      "items": [
+        { "label": "Blog", "href": "https://blog.xerobi.com" },
+        { "label": "Careers", "href": "https://www.xerobi.com/careers" }
+      ]
     }
+  ]
   }
 }

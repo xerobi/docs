@@ -1,0 +1,305 @@
+---
+title: DNS Security FAQ
+description: Frequently asked questions about DNS security and best practices
+---
+
+# DNS Security FAQ
+
+This guide covers common questions about DNS security, encryption protocols, and best practices for securing your DNS queries.
+
+## DNS Security Basics
+
+### What makes DNS insecure?
+
+Traditional DNS (port 53) sends queries in plain text, making them vulnerable to:
+
+- **Eavesdropping**: ISPs and network operators can see all DNS queries
+- **Manipulation**: DNS responses can be altered by attackers
+- **Spoofing**: Fake DNS responses can redirect users to malicious sites
+- **Tracking**: DNS queries can be used to track browsing habits
+
+### What are encrypted DNS protocols?
+
+**DNS over HTTPS (DoH):**
+- Encrypts DNS queries using HTTPS
+- Uses port 443 (same as web traffic)
+- Provides confidentiality and integrity
+- Supported by major browsers and operating systems
+
+**DNS over TLS (DoT):**
+- Encrypts DNS queries using TLS
+- Uses port 853
+- Provides end-to-end encryption
+- Supported by most DNS clients
+
+**DNS over QUIC (DoQ):**
+- Uses QUIC protocol for encryption
+- Potentially faster than DoH/DoT
+- Uses port 784
+- Limited client support currently
+
+## Using Encrypted DNS
+
+### How do I enable DoH in browsers?
+
+**Firefox:**
+1. Go to `about:config`
+2. Search for `network.trr.mode`
+3. Set value to `2` (for fallback) or `3` (TRR only)
+4. Set `network.trr.uri` to `https://dns.hixbe.com/dns-query`
+
+**Chrome/Chromium:**
+```bash
+# Launch with DoH enabled
+chromium --enable-features="dns-over-https" --dns-over-https-server="https://dns.hixbe.com/dns-query"
+```
+
+**Edge:**
+1. Go to Settings → Privacy, search, and services
+2. Scroll to Security
+3. Choose a DNS service provider or enter custom DoH server
+
+### How do I configure DoT on different platforms?
+
+**Linux (systemd-resolved):**
+```bash
+# Edit /etc/systemd/resolved.conf
+[Resolve]
+DNS=1.1.1.1#dns.hixbe.com
+DNSOverTLS=yes
+```
+
+**Windows:**
+1. Go to Settings → Network & Internet → Wi-Fi/Ethernet
+2. Click on your network → Edit DNS settings
+3. Select Manual → Enable DNS over HTTPS
+4. Enter: `https://dns.hixbe.com/dns-query`
+
+**macOS:**
+1. Go to System Settings → Network → [Your Network]
+2. Click Advanced → DNS → DNS Servers
+3. Add DNS server with DoT: `1.1.1.1` (DoT enabled automatically)
+
+### What about mobile devices?
+
+**Android:**
+1. Go to Settings → Network & internet → Advanced → Private DNS
+2. Select "Private DNS provider hostname"
+3. Enter: `dns.hixbe.com`
+
+**iOS:**
+1. Go to Settings → Wi-Fi → [Network Name]
+2. Configure DNS → Manual
+3. Add DNS server: `1.1.1.1`
+4. DNS over TLS will be enabled automatically
+
+## DNS Filtering and Security
+
+### What is DNS-based content filtering?
+
+DNS filtering blocks access to malicious or unwanted domains by:
+
+- **Malware Blocking**: Prevents access to known malware distribution sites
+- **Phishing Protection**: Blocks known phishing domains
+- **Adult Content Filtering**: Blocks adult/pornographic content
+- **Gambling Restrictions**: Blocks online gambling sites
+
+### How does DNS filtering work?
+
+1. **Query Interception**: DNS queries are intercepted before resolution
+2. **Blocklist Checking**: Domain is checked against blocklists
+3. **Response Modification**: If blocked, returns NXDOMAIN or blocked page
+4. **Logging**: Blocked attempts are logged for analysis
+
+### What are the limitations of DNS filtering?
+
+- **Only Domain-Based**: Cannot filter content within allowed domains
+- **Bypassable**: Can be circumvented using VPNs or alternative DNS
+- **False Positives**: Legitimate sites may be incorrectly blocked
+- **No Content Inspection**: Cannot analyze actual web content
+
+## Best Practices
+
+### For Personal Use
+
+1. **Use Encrypted DNS**: Always prefer DoH or DoT over plain DNS
+2. **Enable DNSSEC**: Validate DNS responses cryptographically
+3. **Use Filtering**: Enable malware blocking at minimum
+4. **Regular Updates**: Keep DNS configurations current
+
+### For Organizations
+
+1. **Implement DNS Policies**: Use different filtering levels for different users
+2. **Monitor DNS Traffic**: Log and analyze DNS queries for threats
+3. **Use Local DNS**: Deploy internal DNS servers with external forwarding
+4. **Multi-Layer Security**: Combine DNS security with other security measures
+
+### For Developers
+
+1. **Handle DNS Errors**: Properly handle NXDOMAIN and other DNS errors
+2. **Implement Timeouts**: Set reasonable timeouts for DNS queries
+3. **Use DNS Libraries**: Prefer libraries that support encrypted DNS
+4. **Monitor Resolution**: Track DNS query performance and failures
+
+## Troubleshooting Encrypted DNS
+
+### DoH not working
+
+**Check browser settings:**
+- Verify DoH server URL is correct
+- Ensure HTTPS interception is disabled
+- Check for conflicting extensions
+
+**Network issues:**
+```bash
+# Test DoH connectivity
+curl -I https://dns.hixbe.com/dns-query
+```
+
+### DoT connection failures
+
+**Check port availability:**
+```bash
+# Test DoT port
+telnet dns.hixbe.com 853
+```
+
+**Firewall configuration:**
+```bash
+# Linux - allow DoT
+sudo ufw allow 853/tcp
+```
+
+### Certificate issues
+
+**Certificate validation:**
+```bash
+# Check certificate
+openssl s_client -connect dns.hixbe.com:853 -servername dns.hixbe.com
+```
+
+**Time synchronization:**
+- Ensure system clock is accurate
+- Use NTP servers for time synchronization
+
+## Performance Considerations
+
+### Does encrypted DNS slow things down?
+
+- **Minimal Impact**: Modern encryption has negligible performance cost
+- **Caching Benefits**: Encrypted DNS still benefits from caching
+- **Connection Reuse**: TLS connections are reused for efficiency
+
+### Speed comparison
+
+| Protocol | Typical Latency | Security |
+|----------|----------------|----------|
+| Plain DNS | 20-50ms | None |
+| DoH | 30-70ms | High |
+| DoT | 25-60ms | High |
+| DoQ | 20-50ms | High |
+
+## Privacy and Legal Considerations
+
+### What data is logged?
+
+Our DNS service may log:
+- **Query Timestamps**: When queries were made
+- **Client IPs**: Source IP addresses (temporarily)
+- **Query Types**: Type of DNS records requested
+- **Response Codes**: Success/failure status
+
+### Data retention
+
+- **Temporary Logs**: Used for debugging and performance monitoring
+- **Anonymization**: IPs are anonymized after 24 hours
+- **No Content Storage**: Actual DNS responses are not stored
+- **Compliance**: Follows privacy regulations and best practices
+
+### Legal compliance
+
+- **GDPR Compliant**: EU data protection regulations
+- **No Tracking**: DNS queries are not used for advertising
+- **Transparency**: Logging practices are documented
+- **User Control**: Users can opt-out of logging
+
+## Advanced Configuration
+
+### Custom DNS servers
+
+For advanced users, you can set up custom DNS configurations:
+
+```bash
+# Linux - custom resolv.conf
+# /etc/resolv.conf
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+options edns0
+
+# With custom options
+options timeout:2 attempts:3 rotate
+```
+
+### DNSSEC validation
+
+Enable DNSSEC for cryptographic validation:
+
+```bash
+# Linux
+# /etc/systemd/resolved.conf
+DNSSEC=yes
+
+# Test DNSSEC
+dig @1.1.1.1 example.com +dnssec
+```
+
+## Common Myths
+
+### Myth: Encrypted DNS is only for privacy
+
+**Reality:** While privacy is important, encrypted DNS also provides:
+- Protection against DNS spoofing
+- Prevention of DNS hijacking
+- Secure DNS in public Wi-Fi
+- Compliance with security policies
+
+### Myth: DNS filtering blocks everything
+
+**Reality:** DNS filtering is one layer of security that should be combined with:
+- Web filtering
+- Endpoint protection
+- User education
+- Network segmentation
+
+### Myth: Encrypted DNS is complex to set up
+
+**Reality:** Modern operating systems and browsers make it easy:
+- One-click enable in browsers
+- Simple configuration in OS settings
+- Automatic detection and setup
+
+## Support
+
+For DNS security questions:
+
+- **Email**: support@xerobi.com
+- **Documentation**: Check our [DNS Service](/more/dns-service) documentation
+- **Status**: Monitor service status at `https://status.hixbe.com`
+- **Community**: Join discussions in our developer forum
+
+---
+
+<CardGroup cols={2}>
+  <Card title="DNS Privacy" href="https://www.icann.org/privacy">
+    ICANN DNS Privacy Guidelines
+  </Card>
+  <Card title="DNSSEC" href="https://www.dnssec.net">
+    DNS Security Extensions
+  </Card>
+  <Card title="Encrypted DNS" href="https://www.cloudflare.com/learning/dns/dns-over-https">
+    Cloudflare DNS Encryption Guide
+  </Card>
+  <Card title="DNS Filtering" href="/faq-guides/content-filtering">
+    Content Filtering Best Practices
+  </Card>
+</CardGroup>

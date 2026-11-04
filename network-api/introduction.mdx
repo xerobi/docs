@@ -1,0 +1,52 @@
+---
+title: Xerobi Fiber API
+description: API for Xerobi Fiber customers and business clients
+---
+
+# Xerobi Fiber API
+
+The Xerobi Fiber API provides two distinct interfaces for managing fiber internet services:
+
+- **Consumer API**: Simple, user-friendly endpoints for residential customers to check their network status, account details, usage statistics, and run speed tests.
+- **Business API**: Advanced endpoints for enterprise clients to manage IP assignments, monitor bandwidth usage, and automate network operations.
+
+## 🚀 Key Features
+
+- **Network Monitoring**: Real-time status and configuration information
+- **Usage Analytics**: Detailed bandwidth and data consumption tracking
+- **Speed Testing**: Built-in speed test configuration and endpoints
+- **IP Management**: Enterprise-grade IP address assignment and monitoring
+- **Multi-Tenant Support**: Separate consumer and business interfaces
+- **High Performance**: Optimized for low-latency network operations
+
+## 🔐 Authentication
+
+All endpoints require Bearer token authentication. Include your JWT token in the Authorization header:
+
+```bash
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+Tokens can be obtained from your Xerobi account dashboard.
+
+## 📋 Versioning
+
+All requests must include the `Hixe-Version` header with the API version date (format: YYYY-MM-DD). Current version: `2026-01-01`
+
+```bash
+Hixe-Version: 2026-01-01
+```
+
+## ⚡ Rate Limiting
+
+- Consumer endpoints: 100 requests per minute
+- Business endpoints: 1000 requests per minute
+
+Rate limit information is included in response headers:
+- `X-RateLimit-Limit`: Maximum requests allowed
+- `X-RateLimit-Remaining`: Requests remaining in current window
+- `X-RateLimit-Reset`: Unix timestamp when the limit resets
+
+## 🌐 Servers
+
+- **Production**: `https://api.hixbe.com/fiber`

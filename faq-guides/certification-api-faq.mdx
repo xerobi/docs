@@ -1,0 +1,402 @@
+---
+title: "Certification API FAQ"
+description: "Frequently asked questions about the Xerobi Certification & Badge API"
+icon: certificate
+---
+
+## Getting Started with Credentials
+
+### Basic Credential Operations
+
+<AccordionGroup>
+<Accordion title="How do I issue a digital credential?">
+Issue credentials using the `/credentials` endpoint with a template and recipient information:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/credentials" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "tmpl_123",
+    "recipient": {
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "expires_at": "2026-12-31T23:59:59Z"
+  }'
+```
+</Accordion>
+
+<Accordion title="What types of credentials can I issue?">
+You can issue certificates, badges, diplomas, licenses, and other verifiable credentials using customizable templates.
+</Accordion>
+
+<Accordion title="How do recipients access their credentials?">
+Recipients receive a secure link via email or direct API response. They can view, download, and share their verifiable credentials.
+</Accordion>
+</AccordionGroup>
+
+### Templates and Design
+
+<AccordionGroup>
+<Accordion title="How do I create credential templates?">
+Design templates through the API or dashboard with custom layouts, branding, and variable fields:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/templates" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Completion Certificate",
+    "type": "certificate",
+    "design": {
+      "background_color": "#ffffff",
+      "text_fields": [
+        {"label": "Recipient Name", "variable": "recipient_name"},
+        {"label": "Course", "variable": "course_name"},
+        {"label": "Completion Date", "variable": "completion_date"}
+      ]
+    }
+  }'
+```
+</Accordion>
+
+<Accordion title="Can I customize credential appearance?">
+Yes, templates support custom colors, fonts, logos, and layouts. You can include images, signatures, and security features.
+</Accordion>
+
+<Accordion title="How do I update existing templates?">
+Templates can be updated, but this affects future credentials only. Existing issued credentials remain unchanged.
+</Accordion>
+</AccordionGroup>
+
+## Verification and Validation
+
+### Credential Verification
+
+<AccordionGroup>
+<Accordion title="How do I verify a credential?">
+Use the verification endpoint with the credential ID:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/credentials/verify" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "credential_id": "cred_1234567890"
+  }'
+```
+</Accordion>
+
+<Accordion title="What does verification check?">
+Verification confirms: credential authenticity, issuer validity, expiration status, revocation status, and tamper-proofing.
+</Accordion>
+
+<Accordion title="Can anyone verify credentials?">
+Yes, credentials include public verification URLs that anyone can use without API access.
+</Accordion>
+</AccordionGroup>
+
+### Public Verification
+
+<AccordionGroup>
+<Accordion title="How do public verification links work?">
+Each credential has a unique verification URL like `https://verify.hixbe.com/cred_1234567890` that shows credential details and validity status.
+</Accordion>
+
+<Accordion title="Can I customize verification pages?">
+Yes, you can white-label verification pages with your branding and custom domains.
+</Accordion>
+
+<Accordion title="Are verification links permanent?">
+Yes, verification links remain active even after credential expiration, clearly showing expired status.
+</Accordion>
+</AccordionGroup>
+
+## Badges and Micro-Credentials
+
+### Badge Management
+
+<AccordionGroup>
+<Accordion title="What's the difference between badges and certificates?">
+Badges are typically smaller achievements or skills, while certificates represent larger accomplishments like course completion or degrees.
+</Accordion>
+
+<Accordion title="How do I create badges?">
+Create badges similar to certificates but with badge-specific metadata:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/badges" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "JavaScript Expert",
+    "description": "Demonstrated advanced JavaScript skills",
+    "image_url": "https://example.com/badge-image.png",
+    "criteria": "Complete advanced JS course with 90%+ score"
+  }'
+```
+</Accordion>
+
+<Accordion title="Can badges be stacked or sequenced?">
+Yes, you can create badge pathways where earning one badge unlocks requirements for others.
+</Accordion>
+</AccordionGroup>
+
+## Programs and Pathways
+
+### Learning Programs
+
+<AccordionGroup>
+<Accordion title="What are certification programs?">
+Programs are structured learning pathways with multiple credentials, prerequisites, and progression tracking.
+</Accordion>
+
+<Accordion title="How do I set up a program?">
+Create programs with credential requirements and progression rules:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/programs" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Web Development Certification",
+    "description": "Complete web development pathway",
+    "credentials": [
+      {"template_id": "tmpl_html", "required": true},
+      {"template_id": "tmpl_css", "required": true},
+      {"template_id": "tmpl_js", "required": true}
+    ]
+  }'
+```
+</Accordion>
+
+<Accordion title="How does program completion work?">
+As learners earn individual credentials, the system tracks progress and automatically issues program completion certificates.
+</Accordion>
+</AccordionGroup>
+
+## Security and Compliance
+
+### Credential Security
+
+<AccordionGroup>
+<Accordion title="How are credentials secured?">
+Credentials use cryptographic signatures, tamper-proofing, and blockchain-based verification to ensure authenticity.
+</Accordion>
+
+<Accordion title="Can credentials be forged?">
+No, each credential contains cryptographic proofs that prevent forgery and detect tampering.
+</Accordion>
+
+<Accordion title="What about GDPR and privacy?">
+We comply with GDPR and other privacy regulations. Personal data is encrypted and you control data retention policies.
+</Accordion>
+</AccordionGroup>
+
+### Revocation Management
+
+<AccordionGroup>
+<Accordion title="How do I revoke a credential?">
+Use the revoke endpoint to mark credentials as invalid:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/credentials/revoke" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "credential_id": "cred_1234567890",
+    "reason": "Policy violation"
+  }'
+```
+</Accordion>
+
+<Accordion title="What happens when a credential is revoked?">
+Revoked credentials show as invalid in verification checks and display revocation notices to viewers.
+</Accordion>
+
+<Accordion title="Can revoked credentials be reinstated?">
+Yes, you can unrevoke credentials if the revocation was made in error.
+</Accordion>
+</AccordionGroup>
+
+## Integration and Webhooks
+
+### Certification Webhooks
+
+<AccordionGroup>
+<Accordion title="What webhook events are available?">
+- `credential.issued` - New credential issued
+- `credential.verified` - Credential verification performed
+- `credential.revoked` - Credential revoked
+- `badge.earned` - Badge awarded
+- `program.completed` - Program completion
+</Accordion>
+
+<Accordion title="How do I set up certification webhooks?">
+Register webhook endpoints for certification events:
+
+```bash
+curl -X POST "https://api.hixbe.com/certify/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/certify",
+    "events": ["credential.issued", "credential.revoked"]
+  }'
+```
+</Accordion>
+
+<Accordion title="How do I handle webhook security?">
+Verify webhook signatures and implement idempotency using event IDs to handle duplicate notifications.
+</Accordion>
+</AccordionGroup>
+
+## Audit and Compliance
+
+### Audit Logging
+
+<AccordionGroup>
+<Accordion title="What audit events are logged?">
+All credential operations are logged: issuance, verification, revocation, viewing, and sharing activities.
+</Accordion>
+
+<Accordion title="How do I access audit logs?">
+Use the audit logs endpoint to retrieve activity history:
+
+```bash
+curl -X GET "https://api.hixbe.com/certify/audit-logs?credential_id=cred_123" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+</Accordion>
+
+<Accordion title="How long are audit logs retained?">
+Audit logs are retained for 7 years to comply with regulatory requirements.
+</Accordion>
+</AccordionGroup>
+
+## Testing and Development
+
+### Sandbox Testing
+
+<AccordionGroup>
+<Accordion title="How do I test certification features?">
+Use the sandbox environment to create test credentials without affecting production data.
+</Accordion>
+
+<Accordion title="Are sandbox credentials verifiable?">
+Sandbox credentials have their own verification URLs and don't appear in production verification systems.
+</Accordion>
+
+<Accordion title="Can I migrate test data to production?">
+No, sandbox and production are separate. You'll need to recreate templates and credentials in production.
+</Accordion>
+</AccordionGroup>
+
+## Performance and Scaling
+
+### Rate Limits and Scaling
+
+<AccordionGroup>
+<Accordion title="What are the rate limits?">
+Certification API allows 200 requests per minute per API key, with higher limits for enterprise accounts.
+</Accordion>
+
+<Accordion title="How do I handle bulk credential issuance?">
+Use batch endpoints for issuing multiple credentials efficiently, or implement queuing for large volumes.
+</Accordion>
+
+<Accordion title="Can I integrate with LMS platforms?">
+Yes, we provide integrations with popular LMS platforms like Moodle, Canvas, and custom systems.
+</Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+### Common Certification Errors
+
+<AccordionGroup>
+<Accordion title="CREDENTIAL_ALREADY_EXISTS">
+This credential ID is already in use. Use unique identifiers for each credential.
+</Accordion>
+
+<Accordion title="INVALID_CREDENTIAL_DATA">
+Credential data doesn't match the template schema. Validate data before submission.
+</Accordion>
+
+<Accordion title="VERIFICATION_FAILED">
+Credential verification failed. Check if the credential was revoked or tampered with.
+</Accordion>
+</AccordionGroup>
+
+## Pricing and Billing
+
+### Certification Costs
+
+<AccordionGroup>
+<Accordion title="How am I billed for credentials?">
+Billing is typically per credential issued, with volume discounts available. Verification checks may have separate pricing.
+</Accordion>
+
+<Accordion title="Are there storage costs?">
+Credentials are stored securely with no additional storage fees. Custom verification domains may have additional costs.
+</Accordion>
+
+<Accordion title="What about enterprise pricing?">
+Enterprise plans offer unlimited credentials, white-labeling, and priority support.
+</Accordion>
+</AccordionGroup>
+
+## Use Cases and Examples
+
+### Common Implementation Patterns
+
+<AccordionGroup>
+<Accordion title="E-learning platform integration">
+Issue certificates upon course completion, track learner progress, and provide verifiable proof of skills.
+</Accordion>
+
+<Accordion title="Professional certification">
+Create badge pathways for career development, maintain certification records, and enable easy verification.
+</Accordion>
+
+<Accordion title="Event attendance certificates">
+Automatically issue certificates to event attendees, with QR codes for easy verification.
+</Accordion>
+</AccordionGroup>
+
+## Need More Help?
+
+<CardGroup cols={2}>
+<Card title="Certification API Docs" icon="book" href="/certify-api/introduction">
+Complete API reference
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up credential event notifications
+</Card>
+
+<Card title="Error Handling" icon="alert-triangle" href="/faq-guides/error-handling">
+Handle credential errors
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+Credential integration best practices
+</Card>
+
+<Card title="Troubleshooting" icon="wrench" href="/faq-guides/troubleshooting">
+Certification-specific issues
+</Card>
+
+<Card title="Support" icon="life-ring" href="mailto:support@xerobi.com">
+Contact our support team
+</Card>
+</CardGroup>

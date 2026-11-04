@@ -1,0 +1,261 @@
+---
+title: "API Versioning"
+description: "Understand how Xerobi handles API versioning and backward compatibility"
+icon: tag
+---
+
+## API Versioning Strategy
+
+Xerobi uses a date-based versioning system to ensure predictable API behavior and smooth transitions between versions.
+
+## Version Format
+
+Versions follow the format `YYYY-MM-DD` and are specified in the `Xerobi-Version` header:
+
+```bash
+curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+
+## Current Version
+
+<Info>
+  **Latest Version**: `2026-01-01`
+
+  This is the recommended version for all new integrations. It includes the latest features, improvements, and security enhancements.
+</Info>
+
+## Version Lifecycle
+
+### Version States
+
+| State | Description | Support Level |
+|-------|-------------|---------------|
+| **Active** | Fully supported with new features | Full support |
+| **Deprecated** | Still functional but not recommended | Limited support |
+| **Sunset** | No longer supported | No support |
+
+### Deprecation Timeline
+
+When a new version is released:
+
+1. **Active Period**: 12 months of full support
+2. **Deprecation Notice**: 3 months advance warning
+3. **Deprecated Period**: 6 months of limited support
+4. **Sunset**: Version retired
+
+## Backward Compatibility
+
+### What We Guarantee
+
+- Existing API endpoints remain functional
+- Request/response formats are stable
+- Breaking changes are introduced in new versions only
+- Deprecation notices provided 3+ months in advance
+- Migration guides provided for major changes
+
+### What May Change
+
+- New optional fields added to responses
+- New endpoints added
+- New optional parameters added to requests
+- Performance improvements
+- Bug fixes that don't change behavior
+
+## Version Headers
+
+### Required Headers
+
+```bash
+# Always include the version header
+-H "Xerobi-Version: 2026-01-01"
+```
+
+### Version Detection
+
+If no version header is provided, the API will:
+
+1. Return a `400 Bad Request` error
+2. Include a message specifying the required header
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_VERSION_HEADER",
+    "message": "The Xerobi-Version header is required",
+    "details": {
+      "required_header": "Xerobi-Version",
+      "current_version": "2026-01-01"
+    }
+  }
+}
+```
+
+## Version-Specific Features
+
+### Version 2026-01-01 Features
+
+<AccordionGroup>
+<Accordion title="Payment Gateway Enhancements">
+- Enhanced webhook security with signature verification
+- Improved error messages with detailed field validation
+- New idempotency key support for all endpoints
+- Expanded payment method support
+</Accordion>
+
+<Accordion title="SMS Gateway Improvements">
+- Bulk SMS with individual delivery tracking
+- Enhanced sender ID validation
+- Template management system
+- Improved balance reporting
+</Accordion>
+
+<Accordion title="Certification & Badge Updates">
+- Enhanced credential verification
+- New audit logging capabilities
+- Improved badge management
+- Program-based credential organization
+</Accordion>
+</AccordionGroup>
+
+## Migration Guide
+
+### Upgrading to 2026-01-01
+
+<Steps>
+<Step title="Review changelog">
+
+Check the [changelog](/changelog) for all changes in the new version.
+
+</Step>
+
+<Step title="Test in sandbox">
+
+Update your integration to use the new version in sandbox first:
+
+```bash
+# Test with new version
+curl -X GET "https://sandbox.api.hixbe.com/payment/payment_intents" \
+  -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+
+</Step>
+
+<Step title="Update production">
+
+Once testing is complete, update your production code:
+
+```javascript
+// Update your API client
+const client = new HixbeClient({
+  apiKey: process.env.HIXBE_API_KEY,
+  version: '2026-01-01'  // Update this line
+});
+```
+
+</Step>
+
+<Step title="Monitor for issues">
+
+Watch your application logs and dashboard for any issues after deployment.
+
+</Step>
+</Steps>
+
+## Version History
+
+| Version | Release Date | Status | Notes |
+|---------|--------------|--------|-------|
+| `2026-01-01` | Dec 2025 | Active | Latest features and improvements |
+| `2025-06-01` | Jun 2025 | Deprecated | Use 2026-01-01 |
+| `2025-01-01` | Jan 2025 | Sunset | No longer supported |
+
+## Best Practices
+
+### Version Management
+
+- Always specify the version header explicitly
+- Use the latest version for new integrations
+- Test version upgrades in sandbox first
+- Monitor deprecation notices in your dashboard
+- Keep your integration documentation updated
+
+### Code Organization
+
+<CodeGroup>
+```javascript JavaScript (Recommended)
+// Centralized version management
+const HIXBE_CONFIG = {
+  version: '2026-01-01',
+  baseUrl: process.env.NODE_ENV === 'production'
+    ? 'https://api.hixbe.com'
+    : 'https://sandbox.api.hixbe.com'
+};
+
+class HixbeClient {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.version = HIXBE_CONFIG.version;
+    this.baseUrl = HIXBE_CONFIG.baseUrl;
+  }
+
+  async request(endpoint, options = {}) {
+    const headers = {
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Xerobi-Version': this.version,
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+
+    return fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers
+    });
+  }
+}
+```
+
+```python Python (Recommended)
+# Configuration management
+HIXBE_CONFIG = {
+    'version': '2026-01-01',
+    'base_url': os.getenv('HIXBE_BASE_URL', 'https://api.hixbe.com')
+}
+
+class HixbeClient:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.version = HIXBE_CONFIG['version']
+        self.base_url = HIXBE_CONFIG['base_url']
+
+    def _get_headers(self):
+        return {
+            'Authorization': f'Bearer {self.api_key}',
+            'Xerobi-Version': self.version,
+            'Content-Type': 'application/json'
+        }
+```
+</CodeGroup>
+
+## Support and Migration Help
+
+<CardGroup cols={2}>
+<Card title="Authentication" icon="key" href="/faq-guides/authentication">
+Learn about API keys and headers
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+Version management best practices
+</Card>
+
+<Card title="Changelog" icon="clock" href="/changelog">
+See all version changes and updates
+</Card>
+
+<Card title="Support" icon="life-ring" href="mailto:support@xerobi.com">
+Get help with version upgrades
+</Card>
+</CardGroup>

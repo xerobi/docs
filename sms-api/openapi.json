@@ -1,0 +1,1931 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Xerobi SMS Gateway API",
+    "version": "2026-01-01",
+    "description": "A modern, developer-friendly SMS Gateway API supporting transactional, OTP, promotional and bulk messaging.\n\n## Overview\n\nThe Xerobi SMS Gateway API enables you to send SMS messages programmatically with support for:\n\n- **Transactional SMS**: Account notifications, confirmations, alerts\n- **OTP Messages**: One-time passwords with optimized delivery routes\n- **Promotional SMS**: Marketing campaigns and announcements\n- **Bulk Messaging**: Send to thousands of recipients efficiently\n- **Templates**: Reusable message templates with variable substitution\n- **Webhooks**: Real-time delivery status notifications\n\n## Authentication\n\nAuthenticate using your API key as a Bearer token:\n\n```bash\ncurl -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  -H \"Xerobi-Version: 2026-01-01\" \\\n  https://api.hixbe.com/sms/messages\n```\n\n**API Key Types:**\n- `sk_live_*` - Production keys for live messaging\n- `sk_test_*` - Test keys for development (no actual SMS sent)\n\nGet your API keys from the [Xerobi Dashboard](https://dashboard.hixbe.com/api-keys).\n\n## Rate Limits\n\n- **Standard accounts**: 100 requests/minute\n- **Business accounts**: 1,000 requests/minute\n- **Enterprise accounts**: Custom limits\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests per window\n- `X-RateLimit-Remaining`: Requests remaining\n- `X-RateLimit-Reset`: Unix timestamp when limit resets\n\n## Message Routes\n\nDifferent routes optimize for delivery speed, reliability, and cost:\n\n| Route | Use Case | Delivery Speed | Cost |\n|-------|----------|----------------|------|\n| **otp** | One-time passwords | < 5 seconds | Premium |\n| **transactional** | Notifications, alerts | < 30 seconds | Standard |\n| **promotional** | Marketing messages | < 2 minutes | Economy |\n\n## Phone Number Format\n\nPhone numbers must be in international format without + or spaces:\n- ✅ Correct: `8801712345678` (Bangladesh)\n- ✅ Correct: `14155551234` (USA)\n- ❌ Incorrect: `+880 171 234 5678`\n- ❌ Incorrect: `01712345678`\n\n## Idempotency\n\nInclude `Idempotency-Key` header to safely retry requests:\n\n```bash\ncurl -H \"Idempotency-Key: unique-key-123\" \\\n  -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  ...\n```\n\n## Webhooks\n\nReceive real-time delivery updates via webhooks. Events include:\n- `message.queued` - Message accepted and queued\n- `message.sent` - Message sent to carrier\n- `message.delivered` - Successfully delivered\n- `message.failed` - Delivery failed\n\n## Support\n\nNeed help? Contact us:\n- Email: support@xerobi.com\n- Documentation: https://developer.hixbe.com\n- Status: https://status.hixbe.com",
+    "contact": {
+      "name": "Xerobi Developer Support",
+      "url": "https://developer.hixbe.com",
+      "email": "support@xerobi.com"
+    },
+    "termsOfService": "https://hixbe.com/terms",
+    "license": {
+      "name": "Commercial",
+      "url": "https://hixbe.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.hixbe.com/sms",
+      "description": "Production Server"
+    },
+    {
+      "url": "https://api-sandbox.hixbe.com/sms",
+      "description": "Sandbox Server (test mode)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Messages",
+      "description": "Send and track individual SMS messages"
+    },
+    {
+      "name": "Bulk",
+      "description": "CSV and list-based bulk sending for campaigns"
+    },
+    {
+      "name": "Senders",
+      "description": "Manage sender IDs and registration"
+    },
+    {
+      "name": "Templates",
+      "description": "Create and manage message templates with variables"
+    },
+    {
+      "name": "Reports",
+      "description": "Delivery statistics and usage analytics"
+    },
+    {
+      "name": "Account",
+      "description": "Balance, usage limits and account profile"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Configure delivery report callbacks"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "APIKEY",
+        "description": "Use your API key as a Bearer token. Format: `Authorization: Bearer sk_live_xxxxx`"
+      }
+    },
+    "parameters": {
+      "Xerobi-Version": {
+        "name": "Xerobi-Version",
+        "in": "header",
+        "description": "API version in YYYY-MM-DD format. Using the latest version ensures access to newest features.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "default": "2026-01-01",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "example": "2026-01-01"
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "description": "Unique key for request idempotency. Prevents duplicate messages if you retry the same request within 24 hours.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "example": "req_20260115_abc123"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "Standard error response with detailed information",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Error category for programmatic handling",
+                "example": "validation_error"
+              },
+              "code": {
+                "type": "string",
+                "description": "Specific error code",
+                "example": "invalid_phone_number"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "Phone number must be in international format without spaces or special characters"
+              },
+              "param": {
+                "type": "string",
+                "nullable": true,
+                "description": "Parameter that caused the error",
+                "example": "to"
+              },
+              "request_id": {
+                "type": "string",
+                "description": "Unique request identifier for support and debugging",
+                "example": "req_abc123xyz"
+              },
+              "doc_url": {
+                "type": "string",
+                "description": "Link to relevant documentation",
+                "example": "https://developer.hixbe.com/errors/invalid-phone-number"
+              }
+            },
+            "required": ["type", "code", "message", "request_id"]
+          }
+        },
+        "required": ["error"]
+      },
+      "Message": {
+        "type": "object",
+        "description": "SMS message object with delivery status and metadata",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier",
+            "example": "msg_abc123xyz"
+          },
+          "to": {
+            "type": "string",
+            "description": "Recipient phone number in international format",
+            "example": "8801712345678"
+          },
+          "from": {
+            "type": "string",
+            "description": "Sender ID (alphanumeric or numeric)",
+            "example": "HIXBE"
+          },
+          "body": {
+            "type": "string",
+            "description": "Message content",
+            "example": "Your OTP is 391202. Valid for 5 minutes."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "sent", "delivered", "failed", "expired"],
+            "description": "Current message status",
+            "example": "delivered"
+          },
+          "route": {
+            "type": "string",
+            "enum": ["otp", "transactional", "promotional"],
+            "description": "Message route used for delivery",
+            "example": "transactional"
+          },
+          "segments": {
+            "type": "integer",
+            "description": "Number of SMS segments (1 segment = 160 chars)",
+            "example": 1,
+            "minimum": 1
+          },
+          "cost": {
+            "type": "number",
+            "description": "Message cost in account currency",
+            "example": 0.50,
+            "minimum": 0
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Scheduled delivery time (ISO 8601 format)",
+            "example": "2026-01-15T14:30:00Z"
+          },
+          "sent_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when message was sent to carrier",
+            "example": "2026-01-15T10:30:05Z"
+          },
+          "delivered_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when message was delivered",
+            "example": "2026-01-15T10:30:15Z"
+          },
+          "error_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error code if delivery failed",
+            "example": "number_unreachable"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Message creation timestamp",
+            "example": "2026-01-15T10:30:00Z"
+          }
+        },
+        "required": ["id", "to", "from", "body", "status", "created_at"]
+      },
+      "Balance": {
+        "type": "object",
+        "description": "Account balance information",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "Currency code (ISO 4217)",
+            "example": "BDT"
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current account balance",
+            "example": 524.25,
+            "minimum": 0
+          },
+          "credit_limit": {
+            "type": "number",
+            "description": "Available credit limit (if applicable)",
+            "example": 1000.00,
+            "nullable": true
+          },
+          "low_balance_threshold": {
+            "type": "number",
+            "description": "Balance threshold for low balance alerts",
+            "example": 100.00
+          },
+          "auto_recharge": {
+            "type": "boolean",
+            "description": "Whether auto-recharge is enabled",
+            "example": true
+          }
+        },
+        "required": ["currency", "balance"]
+      },
+      "Sender": {
+        "type": "object",
+        "description": "Sender ID registration and approval status",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique sender ID identifier",
+            "example": "snd_001abc"
+          },
+          "name": {
+            "type": "string",
+            "description": "Sender ID name (alphanumeric, 3-11 characters)",
+            "example": "HIXBE",
+            "minLength": 3,
+            "maxLength": 11
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "suspended"],
+            "description": "Approval status",
+            "example": "approved"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["alphanumeric", "numeric", "shortcode"],
+            "description": "Type of sender ID",
+            "example": "alphanumeric"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country code (ISO 3166-1 alpha-2) where sender ID is registered",
+            "example": "BD"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Approval timestamp",
+            "example": "2025-12-01T09:00:00Z"
+          },
+          "rejection_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for rejection (if status is rejected)",
+            "example": null
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2025-11-15T10:00:00Z"
+          }
+        },
+        "required": ["id", "name", "status", "type"]
+      },
+      "Template": {
+        "type": "object",
+        "description": "Message template with variable substitution",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique template identifier",
+            "example": "tpl_otp_001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name for easy identification",
+            "example": "OTP Verification"
+          },
+          "content": {
+            "type": "string",
+            "description": "Template content with variables in {{variable}} format",
+            "example": "Your OTP is {{code}}. Valid for {{minutes}} minutes. Do not share this code."
+          },
+          "variables": {
+            "type": "array",
+            "description": "List of variables used in template",
+            "items": {
+              "type": "string"
+            },
+            "example": ["code", "minutes"]
+          },
+          "category": {
+            "type": "string",
+            "enum": ["otp", "notification", "marketing", "alert"],
+            "description": "Template category",
+            "example": "otp"
+          },
+          "language": {
+            "type": "string",
+            "description": "Template language (ISO 639-1 code)",
+            "example": "en"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "draft", "archived"],
+            "description": "Template status",
+            "example": "active"
+          },
+          "usage_count": {
+            "type": "integer",
+            "description": "Number of times template has been used",
+            "example": 1247,
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2025-10-01T08:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2025-12-15T14:30:00Z"
+          }
+        },
+        "required": ["id", "name", "content"]
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "Webhook configuration for delivery status callbacks",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique webhook identifier",
+            "example": "wh_001xyz"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Callback URL (must be HTTPS)",
+            "example": "https://yourapp.com/webhooks/sms"
+          },
+          "events": {
+            "type": "array",
+            "description": "List of events to receive",
+            "items": {
+              "type": "string",
+              "enum": [
+                "message.queued",
+                "message.sent",
+                "message.delivered",
+                "message.failed",
+                "message.expired"
+              ]
+            },
+            "example": ["message.delivered", "message.failed"]
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether webhook is currently active",
+            "example": true
+          },
+          "secret": {
+            "type": "string",
+            "description": "Secret key for webhook signature verification",
+            "example": "whsec_abc123xyz456"
+          },
+          "retry_config": {
+            "type": "object",
+            "description": "Retry configuration for failed deliveries",
+            "properties": {
+              "max_attempts": {
+                "type": "integer",
+                "description": "Maximum retry attempts",
+                "example": 3,
+                "minimum": 0,
+                "maximum": 10
+              },
+              "backoff_seconds": {
+                "type": "integer",
+                "description": "Seconds between retry attempts",
+                "example": 60
+              }
+            }
+          },
+          "last_triggered_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last successful webhook delivery",
+            "example": "2026-01-15T10:30:00Z"
+          },
+          "failure_count": {
+            "type": "integer",
+            "description": "Consecutive failure count",
+            "example": 0,
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2025-11-01T12:00:00Z"
+          }
+        },
+        "required": ["id", "url", "events", "enabled"]
+      },
+      "BulkJob": {
+        "type": "object",
+        "description": "Bulk messaging job status and statistics",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique job identifier",
+            "example": "job_bulk_001"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["processing", "completed", "failed", "cancelled"],
+            "description": "Job processing status",
+            "example": "processing"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of recipients",
+            "example": 5000,
+            "minimum": 1
+          },
+          "queued": {
+            "type": "integer",
+            "description": "Messages queued for delivery",
+            "example": 4850
+          },
+          "sent": {
+            "type": "integer",
+            "description": "Messages sent to carrier",
+            "example": 150
+          },
+          "delivered": {
+            "type": "integer",
+            "description": "Successfully delivered messages",
+            "example": 120
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Failed deliveries",
+            "example": 5
+          },
+          "estimated_cost": {
+            "type": "number",
+            "description": "Estimated total cost",
+            "example": 250.00
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Job creation timestamp",
+            "example": "2026-01-15T10:00:00Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Job completion timestamp",
+            "example": null
+          }
+        },
+        "required": ["id", "status", "total", "queued"]
+      },
+      "UsageReport": {
+        "type": "object",
+        "description": "Usage statistics and analytics",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": ["daily", "weekly", "monthly", "yearly"],
+            "description": "Report period",
+            "example": "monthly"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Period start date",
+            "example": "2026-01-01"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Period end date",
+            "example": "2026-01-31"
+          },
+          "messages": {
+            "type": "object",
+            "description": "Message statistics by status",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 12450
+              },
+              "delivered": {
+                "type": "integer",
+                "example": 12100
+              },
+              "failed": {
+                "type": "integer",
+                "example": 350
+              },
+              "delivery_rate": {
+                "type": "number",
+                "description": "Delivery success rate (percentage)",
+                "example": 97.19,
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          },
+          "by_route": {
+            "type": "object",
+            "description": "Statistics broken down by route",
+            "properties": {
+              "otp": {
+                "type": "integer",
+                "example": 3200
+              },
+              "transactional": {
+                "type": "integer",
+                "example": 7500
+              },
+              "promotional": {
+                "type": "integer",
+                "example": 1750
+              }
+            }
+          },
+          "total_cost": {
+            "type": "number",
+            "description": "Total cost for the period",
+            "example": 6225.50
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "BDT"
+          }
+        },
+        "required": ["period", "start_date", "end_date", "messages"]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication failed - invalid or missing API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "type": "authentication_error",
+                "code": "invalid_api_key",
+                "message": "Invalid API key provided. Check your API key at https://dashboard.hixbe.com/api-keys",
+                "request_id": "req_abc123"
+              }
+            }
+          }
+        }
+      },
+      "GenericError": {
+        "description": "Standard error response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "type": "rate_limit_error",
+                "code": "rate_limit_exceeded",
+                "message": "Too many requests. Please retry after 60 seconds.",
+                "request_id": "req_xyz789"
+              }
+            }
+          }
+        },
+        "headers": {
+          "X-RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum requests per window",
+            "example": 100
+          },
+          "X-RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Requests remaining",
+            "example": 0
+          },
+          "X-RateLimit-Reset": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Unix timestamp when limit resets",
+            "example": 1705324800
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds to wait before retry",
+            "example": 60
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "type": "validation_error",
+                "code": "invalid_phone_number",
+                "message": "Phone number must be in international format (e.g., 8801712345678)",
+                "param": "to",
+                "request_id": "req_def456",
+                "doc_url": "https://developer.hixbe.com/phone-format"
+              }
+            }
+          }
+        }
+      },
+      "InsufficientBalance": {
+        "description": "Insufficient account balance",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "type": "payment_error",
+                "code": "insufficient_balance",
+                "message": "Insufficient balance. Current balance: 5.20 BDT. Required: 25.00 BDT. Please recharge your account.",
+                "request_id": "req_ghi789",
+                "doc_url": "https://dashboard.hixbe.com/billing/recharge"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/messages": {
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send SMS",
+        "description": "Send a single SMS message to one recipient.\n\n**Features:**\n- Automatic route optimization based on message type\n- Support for scheduled delivery\n- Unicode and emoji support\n- Automatic message segmentation\n- Delivery status tracking\n\n**Message Length:**\n- Standard (GSM-7): 160 characters per segment\n- Unicode: 70 characters per segment\n- Each additional segment reduces by 7 characters for concatenation header\n\n**Best Practices:**\n- Use OTP route for time-sensitive verification codes\n- Include sender ID for brand recognition\n- Keep messages concise to minimize segments\n- Use templates for consistent messaging\n- Implement idempotency for reliable retries",
+        "operationId": "sendSMS",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Recipient phone number in international format (no + or spaces)",
+                    "example": "8801712345678",
+                    "pattern": "^[1-9][0-9]{7,14}$"
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender ID (must be registered and approved). Defaults to account default sender.",
+                    "example": "HIXBE",
+                    "maxLength": 11
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message content (max 1000 characters)",
+                    "example": "Welcome to HIXBE! Your account has been activated successfully.",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "schedule_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Schedule message for future delivery (ISO 8601 format, max 7 days ahead)",
+                    "example": "2026-01-16T09:00:00Z"
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": ["otp", "transactional", "promotional"],
+                    "default": "transactional",
+                    "description": "Message route. OTP: <5s delivery, Transactional: <30s, Promotional: <2min",
+                    "example": "transactional"
+                  },
+                  "reference_id": {
+                    "type": "string",
+                    "description": "Optional reference ID for your internal tracking",
+                    "example": "order_12345",
+                    "maxLength": 100
+                  },
+                  "callback_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Optional webhook URL for this specific message (overrides account webhook)",
+                    "example": "https://yourapp.com/webhook/order-12345"
+                  }
+                },
+                "required": ["to", "message"]
+              },
+              "examples": {
+                "otp": {
+                  "summary": "OTP Message",
+                  "value": {
+                    "to": "8801712345678",
+                    "from": "HIXBE",
+                    "message": "Your OTP is 391202. Valid for 5 minutes. Do not share.",
+                    "route": "otp"
+                  }
+                },
+                "transactional": {
+                  "summary": "Order Confirmation",
+                  "value": {
+                    "to": "8801712345678",
+                    "from": "HIXBE",
+                    "message": "Your order #12345 has been confirmed. Estimated delivery: Jan 20.",
+                    "route": "transactional",
+                    "reference_id": "order_12345"
+                  }
+                },
+                "scheduled": {
+                  "summary": "Scheduled Reminder",
+                  "value": {
+                    "to": "8801712345678",
+                    "from": "HIXBE",
+                    "message": "Reminder: Your appointment is tomorrow at 2 PM.",
+                    "route": "transactional",
+                    "schedule_at": "2026-01-16T02:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message accepted and queued for delivery",
+            "headers": {
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "id": "msg_abc123xyz",
+                  "to": "8801712345678",
+                  "from": "HIXBE",
+                  "body": "Your OTP is 391202. Valid for 5 minutes. Do not share.",
+                  "status": "queued",
+                  "route": "otp",
+                  "segments": 1,
+                  "cost": 0.75,
+                  "scheduled_at": null,
+                  "sent_at": null,
+                  "delivered_at": null,
+                  "error_code": null,
+                  "created_at": "2026-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/InsufficientBalance"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Messages"],
+        "summary": "List messages",
+        "description": "Retrieve a paginated list of sent messages with optional filters.\n\n**Use Cases:**\n- View message history\n- Track delivery status\n- Export message logs\n- Audit messaging activity",
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of messages to return (1-100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (message ID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by message status",
+            "schema": {
+              "type": "string",
+              "enum": ["queued", "sent", "delivered", "failed", "expired"]
+            }
+          },
+          {
+            "name": "route",
+            "in": "query",
+            "description": "Filter by message route",
+            "schema": {
+              "type": "string",
+              "enum": ["otp", "transactional", "promotional"]
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Filter messages created after this date (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Filter messages created before this date (ISO 8601)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "Whether more results are available"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Cursor for next page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/messages/{message_id}": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "Get message details",
+        "description": "Retrieve detailed information about a specific message including delivery status and timeline.",
+        "operationId": "getMessage",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "description": "Message ID",
+            "schema": {
+              "type": "string"
+            },
+            "example": "msg_abc123xyz"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Message not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bulk": {
+      "post": {
+        "tags": ["Bulk"],
+        "summary": "Send bulk SMS",
+        "description": "Send SMS to multiple recipients in a single API call. Ideal for campaigns and notifications to large audiences.\n\n**Features:**\n- Send to up to 10,000 recipients per request\n- Asynchronous processing\n- Job status tracking\n- Automatic rate limiting and queuing\n- Per-recipient personalization support\n\n**Best Practices:**\n- Break very large lists into batches of 10,000\n- Use off-peak hours for large campaigns\n- Monitor job status via webhooks\n- Test with small batches first",
+        "operationId": "sendBulkSMS",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipients": {
+                    "type": "array",
+                    "description": "List of recipient phone numbers (max 10,000)",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 10000,
+                    "example": ["8801712345678", "8801987654321"]
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message content (same for all recipients)",
+                    "example": "Flash Sale! 50% off everything today only. Shop now!",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender ID (must be approved)",
+                    "example": "HIXBE",
+                    "maxLength": 11
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": ["transactional", "promotional"],
+                    "default": "promotional",
+                    "description": "Message route (OTP not available for bulk)",
+                    "example": "promotional"
+                  },
+                  "schedule_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Schedule bulk send for future time",
+                    "example": "2026-01-16T09:00:00Z"
+                  }
+                },
+                "required": ["recipients", "message"]
+              },
+              "example": {
+                "recipients": ["8801712345678", "8801987654321", "8801555555555"],
+                "message": "Flash Sale! 50% off everything today only. Shop now at hixbe.com",
+                "from": "HIXBE",
+                "route": "promotional"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Bulk job accepted and processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJob"
+                },
+                "example": {
+                  "id": "job_bulk_001",
+                  "status": "processing",
+                  "total": 3,
+                  "queued": 3,
+                  "sent": 0,
+                  "delivered": 0,
+                  "failed": 0,
+                  "estimated_cost": 1.50,
+                  "created_at": "2026-01-15T10:00:00Z",
+                  "completed_at": null
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/InsufficientBalance"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/bulk/{job_id}": {
+      "get": {
+        "tags": ["Bulk"],
+        "summary": "Get bulk job status",
+        "description": "Retrieve the status and statistics of a bulk messaging job.",
+        "operationId": "getBulkJob",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "description": "Bulk job ID",
+            "schema": {
+              "type": "string"
+            },
+            "example": "job_bulk_001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bulk job details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Job not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/senders": {
+      "get": {
+        "tags": ["Senders"],
+        "summary": "List sender IDs",
+        "description": "Get all sender IDs registered to your account with their approval status.",
+        "operationId": "listSenders",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by approval status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "approved", "rejected", "suspended"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sender IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sender"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "snd_001abc",
+                    "name": "HIXBE",
+                    "status": "approved",
+                    "type": "alphanumeric",
+                    "country": "BD",
+                    "approved_at": "2025-12-01T09:00:00Z",
+                    "rejection_reason": null,
+                    "created_at": "2025-11-15T10:00:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Senders"],
+        "summary": "Request sender ID",
+        "description": "Submit a new sender ID for registration and approval.\n\n**Requirements:**\n- Alphanumeric: 3-11 characters, letters only\n- Numeric: 3-15 digits\n- Must not contain offensive content\n- Business verification may be required\n\n**Approval Time:**\n- Standard: 1-3 business days\n- Express: 24 hours (additional fee)\n\n**Documents Required:**\n- Business registration certificate\n- Trade license\n- Authorization letter (on company letterhead)",
+        "operationId": "requestSenderID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Desired sender ID (3-11 characters for alphanumeric)",
+                    "example": "MYSTORE",
+                    "minLength": 3,
+                    "maxLength": 11
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["alphanumeric", "numeric"],
+                    "description": "Type of sender ID",
+                    "example": "alphanumeric"
+                  },
+                  "country": {
+                    "type": "string",
+                    "description": "Country code (ISO 3166-1 alpha-2) for registration",
+                    "example": "BD"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "Intended use of sender ID",
+                    "example": "E-commerce order notifications and OTP",
+                    "maxLength": 500
+                  },
+                  "documents": {
+                    "type": "array",
+                    "description": "URLs of supporting documents (uploaded via /files endpoint)",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "example": ["https://files.hixbe.com/doc_abc123.pdf"]
+                  }
+                },
+                "required": ["name", "type", "country", "purpose"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sender ID request submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sender"
+                },
+                "example": {
+                  "id": "snd_002xyz",
+                  "name": "MYSTORE",
+                  "status": "pending",
+                  "type": "alphanumeric",
+                  "country": "BD",
+                  "approved_at": null,
+                  "rejection_reason": null,
+                  "created_at": "2026-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/templates": {
+      "get": {
+        "tags": ["Templates"],
+        "summary": "List templates",
+        "description": "Retrieve all message templates in your account.",
+        "operationId": "listTemplates",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by template status",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "draft", "archived"]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by template category",
+            "schema": {
+              "type": "string",
+              "enum": ["otp", "notification", "marketing", "alert"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of message templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Template"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Templates"],
+        "summary": "Create template",
+        "description": "Create a new message template with variable placeholders.\n\n**Variables:**\n- Use double curly braces: `{{variable_name}}`\n- Variables are case-sensitive\n- No spaces in variable names\n- Example: `Hello {{name}}, your code is {{code}}`\n\n**Benefits:**\n- Consistent messaging across your application\n- Easy personalization\n- Reusability\n- Version control",
+        "operationId": "createTemplate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Template name for identification",
+                    "example": "Order Confirmation",
+                    "maxLength": 100
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Template content with {{variables}}",
+                    "example": "Hi {{customer_name}}! Order {{order_id}} confirmed. Delivery: {{delivery_date}}",
+                    "maxLength": 1000
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": ["otp", "notification", "marketing", "alert"],
+                    "description": "Template category",
+                    "example": "notification"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "Template language (ISO 639-1)",
+                    "example": "en",
+                    "default": "en"
+                  }
+                },
+                "required": ["name", "content", "category"]
+              },
+              "examples": {
+                "otp": {
+                  "summary": "OTP Template",
+                  "value": {
+                    "name": "OTP Verification",
+                    "content": "Your {{app_name}} verification code is {{code}}. Valid for {{minutes}} minutes.",
+                    "category": "otp",
+                    "language": "en"
+                  }
+                },
+                "order": {
+                  "summary": "Order Notification",
+                  "value": {
+                    "name": "Order Confirmation",
+                    "content": "Hi {{customer_name}}! Order {{order_id}} confirmed. Delivery: {{delivery_date}}. Track: {{tracking_url}}",
+                    "category": "notification",
+                    "language": "en"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/templates/{template_id}/send": {
+      "post": {
+        "tags": ["Templates"],
+        "summary": "Send using template",
+        "description": "Send SMS using a template with variable substitution.",
+        "operationId": "sendWithTemplate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "description": "Template ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Recipient phone number",
+                    "example": "8801712345678"
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender ID",
+                    "example": "HIXBE"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "description": "Key-value pairs for template variables",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "customer_name": "John",
+                      "order_id": "12345",
+                      "delivery_date": "Jan 20"
+                    }
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": ["otp", "transactional", "promotional"],
+                    "example": "transactional"
+                  }
+                },
+                "required": ["to", "variables"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent using template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/usage": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get usage report",
+        "description": "Retrieve detailed usage statistics and analytics for a specific period.\n\n**Metrics Included:**\n- Total messages sent\n- Delivery rates\n- Breakdown by route\n- Cost analysis\n- Failure reasons",
+        "operationId": "getUsageReport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "description": "Report period",
+            "schema": {
+              "type": "string",
+              "enum": ["daily", "weekly", "monthly", "yearly"]
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Period start date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "Period end date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/account/balance": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Get account balance",
+        "description": "Retrieve current account balance and credit information.",
+        "operationId": "getBalance",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account balance information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Balance"
+                },
+                "example": {
+                  "currency": "BDT",
+                  "balance": 524.25,
+                  "credit_limit": 1000.00,
+                  "low_balance_threshold": 100.00,
+                  "auto_recharge": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhooks",
+        "description": "Retrieve all registered webhooks for your account.",
+        "operationId": "listWebhooks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of registered webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Register webhook",
+        "description": "Register a new webhook endpoint to receive delivery status updates.\n\n**Security:**\n- Webhooks are signed with HMAC-SHA256\n- Verify signature using `X-Xerobi-Signature` header\n- Secret is provided in the response\n\n**Retry Logic:**\n- Failed deliveries are retried with exponential backoff\n- Maximum 3 retry attempts\n- Webhook disabled after 10 consecutive failures\n\n**Payload Example:**\n```json\n{\n  \"event\": \"message.delivered\",\n  \"message_id\": \"msg_abc123\",\n  \"to\": \"8801712345678\",\n  \"status\": \"delivered\",\n  \"delivered_at\": \"2026-01-15T10:30:15Z\"\n}\n```",
+        "operationId": "registerWebhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Webhook callback URL (must be HTTPS)",
+                    "example": "https://yourapp.com/webhooks/sms"
+                  },
+                  "events": {
+                    "type": "array",
+                    "description": "Events to subscribe to",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "message.queued",
+                        "message.sent",
+                        "message.delivered",
+                        "message.failed",
+                        "message.expired"
+                      ]
+                    },
+                    "example": ["message.delivered", "message.failed"],
+                    "minItems": 1
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional description for webhook",
+                    "example": "Production delivery notifications",
+                    "maxLength": 200
+                  }
+                },
+                "required": ["url", "events"]
+              },
+              "example": {
+                "url": "https://yourapp.com/webhooks/sms",
+                "events": ["message.delivered", "message.failed"],
+                "description": "Production SMS delivery notifications"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                },
+                "example": {
+                  "id": "wh_001xyz",
+                  "url": "https://yourapp.com/webhooks/sms",
+                  "events": ["message.delivered", "message.failed"],
+                  "enabled": true,
+                  "secret": "whsec_abc123xyz456",
+                  "retry_config": {
+                    "max_attempts": 3,
+                    "backoff_seconds": 60
+                  },
+                  "last_triggered_at": null,
+                  "failure_count": 0,
+                  "created_at": "2026-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/webhooks/{webhook_id}": {
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Delete webhook",
+        "description": "Remove a webhook endpoint from your account.",
+        "operationId": "deleteWebhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "description": "Webhook ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Webhook deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Webhook not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "Get webhook details",
+        "description": "Retrieve detailed information about a specific webhook.",
+        "operationId": "getWebhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "description": "Webhook ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Webhook not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Webhooks"],
+        "summary": "Update webhook",
+        "description": "Update webhook configuration including URL, events, or description.",
+        "operationId": "updateWebhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Xerobi-Version"
+          },
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "description": "Webhook ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Updated webhook URL"
+                  },
+                  "events": {
+                    "type": "array",
+                    "description": "Updated events to subscribe to",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "message.queued",
+                        "message.sent",
+                        "message.delivered",
+                        "message.failed",
+                        "message.expired"
+                      ]
+                    },
+                    "minItems": 1
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Updated description",
+                    "maxLength": 200
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Enable or disable webhook"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Webhook not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

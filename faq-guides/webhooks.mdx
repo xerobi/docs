@@ -1,0 +1,325 @@
+---
+title: "Webhooks"
+description: "Set up real-time notifications for your Xerobi integration"
+icon: webhook
+---
+
+## Webhook Overview
+
+Webhooks allow your application to receive real-time notifications about events in your Xerobi account, eliminating the need for constant polling.
+
+## How Webhooks Work
+
+1. **Event Occurs**: Something happens in your Xerobi account (payment succeeds, SMS delivers, credential issues)
+2. **Notification Sent**: Xerobi sends an HTTP POST request to your configured webhook URL
+3. **Your App Responds**: Your application processes the event and responds with a 200 status code
+4. **Confirmation**: Xerobi marks the webhook as successfully delivered
+
+## Setting Up Webhooks
+
+### Payment Gateway Webhooks
+
+<Steps>
+<Step title="Create a webhook endpoint">
+
+Create an HTTPS endpoint in your application to receive webhook events:
+
+```javascript
+// Express.js example
+app.post('/webhooks/hixbe', express.raw({ type: 'application/json' }), (req, res) => {
+  const event = JSON.parse(req.body);
+
+  // Process the event
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      handlePaymentSuccess(event.data);
+      break;
+    case 'payment_intent.payment_failed':
+      handlePaymentFailure(event.data);
+      break;
+  }
+
+  res.json({ received: true });
+});
+```
+
+</Step>
+
+<Step title="Register webhook in dashboard">
+
+1. Go to [dash.hixbe.com](https://dash.hixbe.com)
+2. Navigate to Webhooks section
+3. Click "Create Webhook"
+4. Enter your endpoint URL
+5. Select event types to listen for
+
+</Step>
+
+<Step title="Test your webhook">
+
+Use the dashboard to send test events to your endpoint.
+
+</Step>
+</Steps>
+
+### SMS Gateway Webhooks
+
+<Steps>
+<Step title="Set up delivery tracking">
+
+```javascript
+app.post('/webhooks/sms-delivery', (req, res) => {
+  const { message_id, status, recipient, timestamp } = req.body;
+
+  // Update message status in your database
+  updateMessageStatus(message_id, status);
+
+  res.json({ success: true });
+});
+```
+
+</Step>
+
+<Step title="Register SMS webhook">
+
+```bash
+curl -X POST "https://api.hixbe.com/sms/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/sms-delivery",
+    "events": ["message.delivered", "message.failed"]
+  }'
+```
+
+</Step>
+</Steps>
+
+### Certification Webhooks
+
+<Steps>
+<Step title="Handle credential events">
+
+```javascript
+app.post('/webhooks/certification', (req, res) => {
+  const event = req.body;
+
+  switch (event.type) {
+    case 'credential.issued':
+      // New credential issued
+      break;
+    case 'credential.verified':
+      // Credential verification completed
+      break;
+    case 'credential.revoked':
+      // Credential has been revoked
+      break;
+  }
+
+  res.json({ acknowledged: true });
+});
+```
+
+</Step>
+</Steps>
+
+## Webhook Events
+
+### Payment Events
+
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `payment_intent.succeeded` | Payment completed successfully | PaymentIntent object |
+| `payment_intent.payment_failed` | Payment failed | PaymentIntent with failure reason |
+| `payment_intent.canceled` | Payment was canceled | PaymentIntent object |
+| `refund.succeeded` | Refund processed successfully | Refund object |
+| `customer.created` | New customer created | Customer object |
+
+### SMS Events
+
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `message.sent` | SMS message sent | Message object with ID |
+| `message.delivered` | SMS delivered to recipient | Delivery confirmation |
+| `message.failed` | SMS delivery failed | Failure reason and details |
+| `balance.low` | SMS balance running low | Current balance info |
+
+### Certification Events
+
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `credential.issued` | New credential issued | Credential details |
+| `credential.verified` | Credential verification completed | Verification result |
+| `credential.revoked` | Credential revoked | Revocation details |
+| `badge.earned` | Badge earned by recipient | Badge information |
+
+## Webhook Security
+
+### Verify Webhook Signatures
+
+<Warning>
+  **Always verify webhook signatures** to ensure requests come from Xerobi and haven't been tampered with.
+</Warning>
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSignature, 'hex')
+  );
+}
+
+// In your webhook handler
+app.post('/webhooks/hixbe', (req, res) => {
+  const signature = req.headers['x-hixbe-signature'];
+  const secret = process.env.WEBHOOK_SECRET;
+
+  if (!verifyWebhookSignature(req.body, signature, secret)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // Process webhook...
+});
+```
+
+### Security Best Practices
+
+- Always use HTTPS for webhook endpoints
+- Verify webhook signatures on all requests
+- Use secret keys unique to each webhook
+- Implement idempotency to handle duplicate events
+- Validate event data before processing
+- Monitor webhook delivery in your dashboard
+
+## Webhook Payload Format
+
+All webhook payloads follow a consistent structure:
+
+```json
+{
+  "id": "evt_1234567890",
+  "type": "payment_intent.succeeded",
+  "created": 1640995200,
+  "data": {
+    "object": {
+      // Event-specific data
+    }
+  },
+  "api_version": "2026-01-01"
+}
+```
+
+## Handling Webhook Failures
+
+### Retry Logic
+
+Xerobi automatically retries failed webhook deliveries:
+
+- **Immediate retry**: After 1 minute
+- **Exponential backoff**: 2, 4, 8, 16 minutes
+- **Final attempt**: After 24 hours
+- **Expiration**: Events expire after 7 days
+
+### Failure Response Codes
+
+| Status Code | Action |
+|-------------|--------|
+| `200-299` | Success - no retry |
+| `300-399` | Success - no retry |
+| `400-499` | Failure - no retry (client error) |
+| `500-599` | Failure - retry with backoff |
+
+### Manual Retry
+
+Failed webhooks can be manually retried from your dashboard.
+
+## Testing Webhooks
+
+### Use RequestBin for Testing
+
+For initial testing, use services like RequestBin or ngrok:
+
+```bash
+# Install ngrok
+npm install -g ngrok
+
+# Expose local server
+ngrok http 3000
+
+# Use the ngrok URL as your webhook endpoint
+# https://abc123.ngrok.io/webhooks/hixbe
+```
+
+### Test Events
+
+Use the dashboard to send test events to your webhook endpoint.
+
+## Monitoring and Debugging
+
+### Webhook Logs
+
+Access webhook delivery logs in your dashboard:
+
+- Delivery status (success/failure)
+- Response time and status codes
+- Request/response payloads
+- Failure reasons
+
+### Common Issues
+
+<AccordionGroup>
+<Accordion title="Webhook not receiving events">
+- Check endpoint URL is correct and accessible
+- Ensure HTTPS is used (HTTP not supported)
+- Verify firewall allows incoming connections
+</Accordion>
+
+<Accordion title="Invalid signature errors">
+- Confirm webhook secret is correct
+- Check signature verification implementation
+- Ensure raw request body is used for signature calculation
+</Accordion>
+
+<Accordion title="Duplicate events">
+- Implement idempotency using event IDs
+- Store processed event IDs in your database
+- Return success quickly to prevent retries
+</Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+- Process webhooks asynchronously to avoid timeouts
+- Implement idempotency using event IDs
+- Store webhook events for debugging
+- Monitor webhook health in your dashboard
+- Use different endpoints for different event types
+- Test thoroughly in sandbox before production
+
+## Need Help?
+
+<CardGroup cols={2}>
+<Card title="Troubleshooting" icon="wrench" href="/faq-guides/troubleshooting">
+Common webhook issues and solutions
+</Card>
+
+<Card title="Error Handling" icon="alert-triangle" href="/faq-guides/error-handling">
+Handle webhook errors gracefully
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+Webhook security and reliability
+</Card>
+
+<Card title="API Reference" icon="book" href="/payment-api/introduction">
+Complete webhook API documentation
+</Card>
+</CardGroup>

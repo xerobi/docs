@@ -1,0 +1,52 @@
+---
+title: Xerobi Speed Test API
+description: Comprehensive network speed testing API with advanced metrics and real-time monitoring
+---
+
+# Xerobi Speed Test API
+
+The Xerobi Speed Test API provides comprehensive network performance testing capabilities with advanced metrics, real-time progress tracking, result history, and comparative analysis.
+
+## 🚀 Key Features
+
+- **Basic Metrics**: Ping, jitter, download, and upload speed tests
+- **Advanced Testing**: Multi-file and comprehensive network analysis
+- **Full Speed Tests**: Complete network diagnostics in a single call
+- **Real-time Monitoring**: Server-Sent Events for test progress tracking
+- **Result History**: Store and retrieve historical test results
+- **Comparative Analysis**: Compare results over time and with other users
+- **Server Management**: Custom test server configuration
+
+## 🌐 Servers
+
+- **Production**: `https://api.hixbe.com/speedtest`
+
+## 🔐 Security
+
+All endpoints (except health and API docs) require the `Xerobi-Version` header:
+
+```bash
+curl -H "Xerobi-Version: 2.0.0" \
+  https://api.hixbe.com/speedtest/ping
+```
+
+## 📊 Test Types
+
+### Basic Metrics
+- **Ping (Latency)**: Measure network latency
+- **Jitter**: Network latency variance
+- **Download Speed**: Bandwidth measurement for downloads
+- **Upload Speed**: Bandwidth measurement for uploads
+
+### Advanced Tests
+- **Advanced Download**: Multi-file download test (1MB, 10MB, 50MB)
+- **Advanced Upload**: Multi-file upload test
+- **Full Test**: Comprehensive network analysis with all metrics
+- **Custom Test**: Define your own test parameters
+
+## 📈 Results & Analysis
+
+- **Results History**: View all past test results
+- **Statistics**: Aggregate metrics and trends
+- **Comparison**: Analyze performance over time
+- **Real-time Streaming**: Monitor test progress via Server-Sent Events

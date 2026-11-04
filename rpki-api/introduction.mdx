@@ -1,0 +1,108 @@
+---
+title: RPKI API
+description: Route origin validation and RPKI infrastructure monitoring
+---
+
+# RPKI API
+
+The Xerobi RPKI API provides access to RPKI - a powerful RPKI validation service for checking Route Origin Authorization (ROA) and monitoring RPKI infrastructure health.
+
+## 🚀 What is RPKI?
+
+Resource Public Key Infrastructure (RPKI) is a security framework designed to secure Internet routing. It helps prevent routing incidents by allowing network operators to verify that an Autonomous System (AS) is authorized to originate specific IP prefixes.
+
+## 🔍 Key Features
+
+- **Route Validation**: Check if route announcements are RPKI valid, invalid, or not found
+- **Bulk Validation**: Validate multiple routes in a single request
+- **Real-time Updates**: Get incremental changes to the RPKI dataset via delta endpoints
+- **Infrastructure Monitoring**: Monitor trust anchors, repositories, and RPKI sessions
+- **Prometheus Metrics**: Export monitoring data for observability platforms
+- **High Performance**: Optimized for low-latency validation queries
+
+## 📋 Common Use Cases
+
+### Network Operators
+- Validate BGP route announcements before accepting them
+- Monitor RPKI infrastructure health
+- Implement origin validation in routing policies
+
+### Security Teams
+- Detect BGP hijacking attempts
+- Validate routing announcements for compliance
+- Monitor for RPKI-invalid routes
+
+### Developers
+- Integrate RPKI validation into network tools
+- Build automated route validation systems
+- Create monitoring dashboards with real-time RPKI data
+
+## 🔐 Authentication
+
+All endpoints require Bearer token authentication. Include your JWT token in the Authorization header:
+
+```bash
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+Tokens can be obtained from your Xerobi account dashboard.
+
+## 📊 Validation States
+
+RPKI validation returns one of three states:
+
+- **valid**: The route announcement matches a valid ROA
+- **invalid**: The route conflicts with existing ROAs (wrong AS or prefix too specific)
+- **not-found**: No ROA exists for this prefix
+
+## ⚡ Rate Limiting
+
+- Standard endpoints: 1000 requests per minute
+- Delta/notification endpoints: 100 requests per minute
+
+Rate limit information is included in response headers:
+- `X-RateLimit-Limit`: Maximum requests allowed
+- `X-RateLimit-Remaining`: Requests remaining in current window
+- `X-RateLimit-Reset`: Unix timestamp when the limit resets
+
+## 🌐 Base URL
+
+```
+https://api.hixbe.com/rpki
+```
+
+## 📚 Understanding VRPs
+
+Validated ROA Payloads (VRPs) are the building blocks of RPKI validation. Each VRP contains:
+- **ASN**: The Autonomous System Number authorized to originate the prefix
+- **Prefix**: The IP address prefix
+- **Max Length**: The maximum prefix length that can be announced
+
+When validating a route, the API returns:
+- **matched**: VRPs that make the route valid
+- **unmatched_as**: VRPs with the same prefix but different AS (causes invalid state)
+- **unmatched_length**: VRPs with the same AS but prefix is too specific (causes invalid state)
+
+## 🔄 Delta Updates
+
+For applications that need real-time RPKI data, the delta endpoints provide an efficient way to stay synchronized:
+
+1. Call `/json-delta` to get the current dataset and session info
+2. Use `/json-delta/notify` for long-polling notifications of updates
+3. When notified, call `/json-delta` with session and serial to get incremental changes
+
+This approach minimizes bandwidth and processing compared to repeatedly fetching the full dataset.
+
+## 🛠️ Best Practices
+
+1. **Cache Results**: RPKI data changes infrequently. Cache validation results with appropriate TTLs
+2. **Use Bulk Validation**: For multiple routes, use POST `/validity` instead of multiple GET requests
+3. **Monitor Status**: Regularly check `/status` to ensure RPKI infrastructure is healthy
+4. **Handle Not-Found**: Routes without ROAs should be treated according to your security policy
+5. **Implement Fallbacks**: Have a plan for when RPKI validation is unavailable
+
+## 📖 Additional Resources
+
+- [RFC 6480](https://tools.ietf.org/html/rfc6480) - RPKI Architecture
+- [RFC 6811](https://tools.ietf.org/html/rfc6811) - BGP Prefix Origin Validation
+- [Routinator Documentation](https://github.com/NLnetLabs/routinator)

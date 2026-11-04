@@ -1,0 +1,293 @@
+---
+title: Time Synchronization FAQ
+description: Frequently asked questions about NTP and time synchronization services
+---
+
+# Time Synchronization FAQ
+
+This guide answers common questions about time synchronization, NTP servers, and best practices for keeping your systems accurately synchronized.
+
+## General Questions
+
+### What is NTP?
+
+NTP (Network Time Protocol) is a networking protocol for clock synchronization between computer systems over packet-switched, variable-latency data networks. It provides accurate time synchronization with millisecond precision.
+
+### Why is accurate time important?
+
+Accurate time synchronization is crucial for:
+
+- **Security**: Certificate validation, authentication logs, and security protocols
+- **Distributed Systems**: Database consistency, transaction ordering, and coordination
+- **Compliance**: Regulatory requirements for audit trails and timestamps
+- **Debugging**: Correlating logs across multiple systems
+- **Financial Transactions**: Precise timing for trading and payment processing
+
+### What's the difference between NTP and Roughtime?
+
+- **NTP**: Traditional protocol providing high precision time synchronization
+- **Roughtime**: Modern, secure protocol with cryptographic guarantees against network attacks
+- **Best Practice**: Use both - Roughtime for security, NTP for precision
+
+## Using Xerobi NTP Servers
+
+### How do I configure my system to use time.xerobi.com?
+
+**Linux (systemd):**
+```bash
+# Edit /etc/systemd/timesyncd.conf
+sudo nano /etc/systemd/timesyncd.conf
+
+# Add or modify:
+NTP=time.xerobi.com
+FallbackNTP=ntp.ubuntu.com
+
+# Restart the service
+sudo systemctl restart systemd-timesyncd
+```
+
+**Linux (chrony):**
+```bash
+# Edit /etc/chrony/chrony.conf
+sudo nano /etc/chrony/chrony.conf
+
+# Add:
+server time.xerobi.com iburst
+
+# Restart chrony
+sudo systemctl restart chrony
+```
+
+**Windows:**
+```powershell
+# Open PowerShell as Administrator
+w32tm /config /manualpeerlist:time.xerobi.com /syncfromflags:manual /reliable:yes /update
+w32tm /resync
+```
+
+### What ports need to be open?
+
+- **NTP**: UDP port 123
+- **Roughtime**: TCP port 2002
+
+### Is there any rate limiting?
+
+Our NTP servers are provided free of charge with reasonable usage limits. For high-volume applications, consider using multiple NTP servers or implementing local NTP servers.
+
+## Troubleshooting
+
+### My system isn't synchronizing
+
+**Check firewall settings:**
+```bash
+# Linux
+sudo ufw allow 123/udp
+# or
+sudo iptables -A INPUT -p udp --dport 123 -j ACCEPT
+```
+
+**Verify NTP service status:**
+```bash
+# systemd
+systemctl status systemd-timesyncd
+
+# chrony
+chronyc sources
+chronyc tracking
+```
+
+**Check time difference:**
+```bash
+# Quick check
+ntpdate -q time.xerobi.com
+```
+
+### I'm getting "no server suitable for synchronization"
+
+This usually means:
+1. Firewall blocking NTP traffic
+2. Incorrect server configuration
+3. Network connectivity issues
+4. NTP service not running
+
+### How do I verify synchronization is working?
+
+**Linux:**
+```bash
+timedatectl status
+ntpstat
+```
+
+**Windows:**
+```cmd
+w32tm /query /status
+```
+
+**Check offset:**
+```bash
+# Using ntpdate
+ntpdate -q time.xerobi.com
+
+# Using chronyc
+chronyc tracking
+```
+
+## Best Practices
+
+### Redundancy
+
+Always configure multiple NTP servers:
+
+```bash
+# /etc/systemd/timesyncd.conf
+NTP=time.xerobi.com ntp.ubuntu.com time.nist.gov
+```
+
+### Monitoring
+
+Monitor your time synchronization:
+
+```bash
+# Check offset regularly
+chronyc tracking | grep "System time"
+
+# Alert if offset > 100ms
+#!/bin/bash
+OFFSET=$(chronyc tracking | grep "System time" | awk '{print $4}')
+if (( $(echo "$OFFSET > 0.1" | bc -l) )); then
+    echo "Time offset too high: $OFFSET seconds"
+fi
+```
+
+### Security Considerations
+
+1. **Use authenticated NTP** when possible (NTPv4 with autokey)
+2. **Implement Roughtime** for cryptographic security
+3. **Monitor for time jumps** that could indicate attacks
+4. **Use local NTP servers** for internal networks
+
+## Advanced Configuration
+
+### NTP Pool Configuration
+
+For high availability, use NTP pools:
+
+```bash
+# /etc/ntp.conf
+server 0.pool.ntp.org
+server 1.pool.ntp.org
+server time.xerobi.com
+```
+
+### Custom NTP Server Setup
+
+If you need your own NTP server:
+
+```bash
+# Install NTP
+sudo apt install ntp
+
+# Configure upstream servers
+# /etc/ntp.conf
+server time.xerobi.com prefer
+server ntp.ubuntu.com
+
+# Configure as server
+restrict default kod nomodify notrap nopeer noquery
+restrict -6 default kod nomodify notrap nopeer noquery
+restrict 127.0.0.1
+restrict -6 ::1
+```
+
+## Common Issues and Solutions
+
+### Large time jumps
+
+**Cause:** System clock was significantly off
+**Solution:** Use `ntpd` instead of `ntpdate` for gradual correction
+
+### NTP socket in use
+
+**Cause:** Multiple NTP services running
+**Solution:**
+```bash
+sudo systemctl stop ntp
+sudo systemctl disable ntp
+sudo systemctl enable systemd-timesyncd
+```
+
+### DNS resolution failures
+
+**Cause:** DNS issues preventing server lookup
+**Solution:** Use IP addresses directly or fix DNS configuration
+
+## Performance Tuning
+
+### For low-latency applications
+
+```bash
+# /etc/chrony/chrony.conf
+server time.xerobi.com iburst minpoll 4 maxpoll 6
+makestep 0.1 3
+```
+
+### For power-constrained devices
+
+```bash
+# Less frequent polling
+server time.xerobi.com minpoll 8 maxpoll 12
+```
+
+## Monitoring and Alerting
+
+### NTP Monitoring Script
+
+```bash
+#!/bin/bash
+# ntp-monitor.sh
+
+SERVERS=("time.xerobi.com" "ntp.ubuntu.com")
+THRESHOLD=0.5  # seconds
+
+for server in "${SERVERS[@]}"; do
+    if ntpdate -q "$server" >/dev/null 2>&1; then
+        offset=$(ntpdate -q "$server" 2>/dev/null | tail -1 | awk '{print $9}')
+        if (( $(echo "${offset#-} > $THRESHOLD" | bc -l) )); then
+            echo "WARNING: High offset $offset seconds from $server"
+        else
+            echo "OK: $server offset $offset seconds"
+        fi
+    else
+        echo "ERROR: Cannot reach $server"
+    fi
+done
+```
+
+## Support
+
+If you're still having issues:
+
+1. Check our [NTP Servers documentation](/more/ntp-servers)
+2. Visit the [NTP Pool status page](https://www.ntppool.org/scores/time.xerobi.com)
+3. Contact support at support@xerobi.com with:
+   - Your operating system and version
+   - NTP client configuration
+   - Error messages
+   - Network setup details
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="NTP Documentation" href="/more/ntp-servers">
+    Complete NTP server documentation
+  </Card>
+  <Card title="NTP Pool Project" href="https://www.ntppool.org">
+    Join the NTP Pool project
+  </Card>
+  <Card title="Chrony Documentation" href="https://chrony.tuxfamily.org">
+    Advanced NTP client documentation
+  </Card>
+  <Card title="Roughtime Specification" href="https://roughtime.googlesource.com/roughtime">
+    Roughtime protocol details
+  </Card>
+</CardGroup>

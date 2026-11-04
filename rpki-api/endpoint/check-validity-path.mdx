@@ -1,0 +1,12 @@
+---
+title: 'Check Route Validity (Path)'
+openapi: 'GET /validity/{asNumber}/{prefix}'
+---
+
+Returns whether a route announcement is RPKI valid, invalid, or not found. Includes complete list of VRPs that caused the result.
+
+**Use Cases:**
+- Validate BGP route announcements
+- Check specific prefix origin authorization
+- Verify route legitimacy before accepting
+- Detect potential BGP hijacking

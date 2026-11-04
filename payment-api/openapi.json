@@ -1,0 +1,681 @@
+{
+    "openapi": "3.1.0",
+  "info": {
+    "title": "Xerobi Payment API",
+    "version": "2026-01-01",
+    "description": "A developer-first REST API for a modern payment gateway. Focused on predictable semantics, idempotency, clear errors, and observability. Use `Authorization: Bearer <sk_...>` for requests. All amounts are smallest currency unit (e.g. paisa for BDT).",
+    "termsOfService": "https://api.hixbe.com/terms",
+    "contact": {
+      "name": "Xerobi Developer Support",
+      "url": "https://developer.hixbe.com",
+      "email": "support@xerobi.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://hixbe.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://sandbox.api.hixbe.com/payment",
+      "description": "Sandbox (test)"
+    },
+    {
+      "url": "https://api.hixbe.com/payment",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    { "name": "PaymentIntents", "description": "Orchestrate payments (recommended pattern)" },
+    { "name": "PaymentMethods", "description": "Create and manage payment methods / tokens" },
+    { "name": "Customers", "description": "Customer objects and stored methods" },
+    { "name": "Refunds", "description": "Issue partial/full refunds" },
+    { "name": "Webhooks", "description": "Register webhook endpoints and view events" },
+    { "name": "Observability", "description": "Request debugging and headers" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Use your secret API key. Example: `Authorization: Bearer sk_test_xxx`"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "description": "category (invalid_request, auth_error, processing_error, rate_limit, internal_error)" },
+              "code": { "type": "string", "description": "machine-friendly error code" },
+              "message": { "type": "string", "description": "human-friendly message" },
+              "param": { "type": "string", "nullable": true, "description": "request parameter related to the error, if any" },
+              "request_id": { "type": "string", "description": "gateway generated request id for debugging" }
+            },
+            "required": ["type", "code", "message"]
+          }
+        }
+      },
+      "IdempotencyKeyHeader": {
+        "type": "string",
+        "description": "Idempotency-Key header value to make POST idempotent (UUID recommended)"
+      },
+      "PaymentIntent": {
+        "type": "object",
+        "description": "Represents an intent to collect payment from a customer. Use confirm to finalize.",
+        "properties": {
+          "id": { "type": "string", "example": "pi_1Hh1X2AbCdEf" },
+          "object": { "type": "string", "example": "payment_intent" },
+          "amount": { "type": "integer", "description": "Amount in smallest currency unit", "example": 1500 },
+          "currency": { "type": "string", "example": "BDT" },
+          "status": { "type": "string", "enum": ["requires_payment_method", "requires_confirmation", "processing", "succeeded", "requires_action", "canceled"], "example": "requires_payment_method" },
+          "capture_method": { "type": "string", "enum": ["automatic", "manual"], "example": "automatic" },
+          "client_secret": { "type": "string", "description": "Client-side secret used by frontends", "example": "cs_test_abc" },
+          "customer": { "type": "string", "nullable": true, "example": "cus_123" },
+          "payment_method": { "type": "string", "nullable": true, "example": "pm_card_abc" },
+          "metadata": { "type": "object", "additionalProperties": { "type": "string" } },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "charges": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Charge" }
+          }
+        },
+        "required": ["id", "amount", "currency", "status", "client_secret"]
+      },
+      "Charge": {
+        "type": "object",
+        "description": "Represents an actual charge produced when a payment succeeds.",
+        "properties": {
+          "id": { "type": "string", "example": "ch_1Hh2Z3AbCdEf" },
+          "amount": { "type": "integer", "example": 1500 },
+          "currency": { "type": "string", "example": "BDT" },
+          "status": { "type": "string", "enum": ["pending", "succeeded", "failed", "refunded"], "example": "succeeded" },
+          "payment_method": { "type": "string" },
+          "receipt_url": { "type": "string", "format": "uri" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "amount", "currency", "status"]
+      },
+      "PaymentMethod": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "pm_card_123" },
+          "type": { "type": "string", "example": "card" },
+          "card": {
+            "type": "object",
+            "properties": {
+              "brand": { "type": "string", "example": "visa" },
+              "last4": { "type": "string", "example": "4242" },
+              "exp_month": { "type": "integer", "example": 12 },
+              "exp_year": { "type": "integer", "example": 2027 }
+            }
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "customer": { "type": "string", "nullable": true }
+        },
+        "required": ["id", "type"]
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "cus_123" },
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string" },
+          "phone": { "type": "string" },
+          "metadata": { "type": "object", "additionalProperties": { "type": "string" } },
+          "default_payment_method": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id"]
+      },
+      "Refund": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "re_123" },
+          "charge": { "type": "string" },
+          "amount": { "type": "integer" },
+          "status": { "type": "string", "enum": ["pending", "succeeded", "failed"], "example": "succeeded" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "charge", "amount", "status"]
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "wh_123" },
+          "url": { "type": "string", "format": "uri" },
+          "description": { "type": "string" },
+          "events": {
+            "type": "array",
+            "items": { "type": "string", "example": "payment.succeeded" }
+          },
+          "enabled": { "type": "boolean", "example": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "url", "events"]
+      },
+      "WebhookEvent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "evt_123" },
+          "type": { "type": "string", "example": "payment.succeeded" },
+          "created": { "type": "integer", "example": 1700000000 },
+          "data": { "type": "object", "description": "Event payload (contains `object`)", "properties": { "object": { "type": "object" } } }
+        },
+        "required": ["id", "type", "created", "data"]
+      },
+      "ListResponse": {
+        "type": "object",
+        "properties": {
+          "object": { "type": "string", "example": "list" },
+          "data": { "type": "array", "items": {} },
+          "has_more": { "type": "boolean" },
+          "next_cursor": { "type": "string", "nullable": true }
+        }
+      }
+    },
+    "parameters": {
+      "Xerobi-Version": {
+        "name": "Xerobi-Version",
+        "in": "header",
+        "description": "API version header. Use '2026-01-01' for the latest version.",
+        "required": true,
+        "schema": { "type": "string", "default": "2026-01-01" }
+      },
+      "Idempotency-Key": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "description": "Idempotency key for safely retrying POST requests.",
+        "required": false,
+        "schema": { "type": "string" }
+      },
+      "X-Request-Id": {
+        "name": "X-Request-Id",
+        "in": "header",
+        "description": "Optional client-provided request id for tracing.",
+        "required": false,
+        "schema": { "type": "string" }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication failed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "GenericError": {
+        "description": "Standard error response",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/payment_intents": {
+      "post": {
+        "tags": ["PaymentIntents"],
+        "summary": "Create a PaymentIntent",
+        "description": "Create a PaymentIntent to begin the payment flow. Use `Idempotency-Key` header to make this request idempotent.",
+        "operationId": "createPaymentIntent",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "$ref": "#/components/parameters/Idempotency-Key" },
+          { "$ref": "#/components/parameters/X-Request-Id" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": { "type": "integer", "example": 1500 },
+                  "currency": { "type": "string", "example": "BDT" },
+                  "customer": { "type": "string" },
+                  "automatic_payment_methods": { "type": "boolean", "default": true },
+                  "capture_method": { "type": "string", "enum": ["automatic", "manual"], "default": "automatic" },
+                  "metadata": { "type": "object", "additionalProperties": { "type": "string" } }
+                },
+                "required": ["amount", "currency"]
+              },
+              "example": {
+                "amount": 1500,
+                "currency": "BDT",
+                "customer": "cus_123",
+                "automatic_payment_methods": true,
+                "metadata": { "order_id": "ORD-32" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment intent created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaymentIntent" }
+              }
+            },
+            "headers": {
+              "X-Request-Id": { "description": "Gateway request id", "schema": { "type": "string" } },
+              "X-API-Version": { "description": "API version served", "schema": { "type": "string" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": {
+            "description": "Idempotency conflict - request previously completed with different payload",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "get": {
+        "tags": ["PaymentIntents"],
+        "summary": "List PaymentIntents",
+        "description": "List PaymentIntents with optional filtering and pagination.",
+        "operationId": "listPaymentIntents",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20, "maximum": 100 },
+            "description": "Max results to return"
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Cursor for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of PaymentIntents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ListResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/PaymentIntent" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/payment_intents/{id}": {
+      "get": {
+        "tags": ["PaymentIntents"],
+        "summary": "Retrieve a PaymentIntent",
+        "operationId": "retrievePaymentIntent",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "PaymentIntent id (pi_...)" },
+          { "$ref": "#/components/parameters/X-Request-Id" }
+        ],
+        "responses": {
+          "200": { "description": "PaymentIntent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentIntent" } } } },
+          "404": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/payment_intents/{id}/attach": {
+      "post": {
+        "tags": ["PaymentIntents"],
+        "summary": "Attach a Payment Method to a PaymentIntent",
+        "description": "Attach an existing payment method (or ephemeral) to an intent. Idempotent by Idempotency-Key.",
+        "operationId": "attachPaymentMethodToIntent",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/Idempotency-Key" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payment_method": { "type": "string" },
+                  "save_to_customer": { "type": "boolean", "description": "If true and customer provided, save as default payment method" }
+                },
+                "required": ["payment_method"]
+              },
+              "example": { "payment_method": "pm_card_123", "save_to_customer": true }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated PaymentIntent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentIntent" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/payment_intents/{id}/confirm": {
+      "post": {
+        "tags": ["PaymentIntents"],
+        "summary": "Confirm a PaymentIntent",
+        "description": "Confirm the intent to finalize payment. This will attempt authorization/capture depending on capture_method. Use Idempotency-Key to protect retries.",
+        "operationId": "confirmPaymentIntent",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "$ref": "#/components/parameters/Idempotency-Key" }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "return_url": { "type": "string", "format": "uri", "description": "Optional for 3DS flows" },
+                  "payment_method_options": { "type": "object", "description": "Provider-specific options" }
+                }
+              },
+              "example": { "return_url": "https://merchant.com/order/123/complete" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Confirmed PaymentIntent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentIntent" } } } },
+          "402": { "description": "Payment required / failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/payment_methods": {
+      "post": {
+        "tags": ["PaymentMethods"],
+        "summary": "Create a Payment Method (tokenize)",
+        "description": "Create a vaultable payment method. In production, clients should use a frontend tokenization flow (PCI scope reduction).",
+        "operationId": "createPaymentMethod",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "$ref": "#/components/parameters/X-Request-Id" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": { "type": "string", "enum": ["card"], "default": "card" },
+                      "card": {
+                        "type": "object",
+                        "properties": {
+                          "number": { "type": "string", "description": "PAN - use tokenization from clients" },
+                          "exp_month": { "type": "integer" },
+                          "exp_year": { "type": "integer" },
+                          "cvc": { "type": "string" }
+                        },
+                        "required": ["number", "exp_month", "exp_year"]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": { "type": "string", "enum": ["bank_transfer", "wallet"] },
+                      "details": { "type": "object", "description": "method specific details" }
+                    }
+                  }
+                ]
+              },
+              "example": { "type": "card", "card": { "number": "4242424242424242", "exp_month": 12, "exp_year": 2027, "cvc": "123" } }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "PaymentMethod created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentMethod" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/payment_methods/{id}": {
+      "get": {
+        "tags": ["PaymentMethods"],
+        "summary": "Retrieve a PaymentMethod",
+        "operationId": "retrievePaymentMethod",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "PaymentMethod", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentMethod" } } } },
+          "404": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/customers": {
+      "post": {
+        "tags": ["Customers"],
+        "summary": "Create a Customer",
+        "operationId": "createCustomer",
+        "parameters": [{ "$ref": "#/components/parameters/Xerobi-Version" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "metadata": { "type": "object", "additionalProperties": { "type": "string" } }
+                }
+              },
+              "example": { "email": "jane@example.com", "name": "Jane Doe" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Customer created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Customer" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" }
+        }
+      },
+      "get": {
+        "tags": ["Customers"],
+        "summary": "List Customers",
+        "operationId": "listCustomers",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "starting_after", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers",
+            "content": { "application/json": { "schema": { "allOf": [{ "$ref": "#/components/schemas/ListResponse" }, { "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Customer" } } } }] } } }
+          }
+        }
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Retrieve a Customer",
+        "operationId": "retrieveCustomer",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Customer", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Customer" } } } },
+          "404": { "$ref": "#/components/responses/GenericError" }
+        }
+      }
+    },
+    "/customers/{id}/payment_methods": {
+      "post": {
+        "tags": ["Customers"],
+        "summary": "Attach Payment Method to Customer",
+        "operationId": "attachPaymentMethodToCustomer",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "payment_method": { "type": "string" }, "set_default": { "type": "boolean" } }, "required": ["payment_method"] },
+              "example": { "payment_method": "pm_card_123", "set_default": true }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Customer updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Customer" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" }
+        }
+      }
+    },
+    "/refunds": {
+      "post": {
+        "tags": ["Refunds"],
+        "summary": "Create a Refund",
+        "description": "Issue a full or partial refund for a charge. Use Idempotency-Key to protect retries.",
+        "operationId": "createRefund",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "$ref": "#/components/parameters/Idempotency-Key" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "charge": { "type": "string" }, "amount": { "type": "integer" }, "reason": { "type": "string" } }, "required": ["charge"] },
+              "example": { "charge": "ch_1Hh2Z3AbCdEf", "amount": 500, "reason": "requested_by_customer" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Refund created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Refund" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/refunds/{id}": {
+      "get": {
+        "tags": ["Refunds"],
+        "summary": "Retrieve a Refund",
+        "operationId": "retrieveRefund",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Refund", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Refund" } } } },
+          "404": { "$ref": "#/components/responses/GenericError" }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Register a webhook endpoint",
+        "operationId": "createWebhookEndpoint",
+        "parameters": [{ "$ref": "#/components/parameters/Xerobi-Version" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "format": "uri" },
+                  "events": { "type": "array", "items": { "type": "string" } },
+                  "description": { "type": "string" }
+                },
+                "required": ["url", "events"]
+              },
+              "example": { "url": "https://merchant.example/webhooks", "events": ["payment.succeeded", "payment.failed"], "description": "Primary webhook" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Webhook endpoint created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookEndpoint" } } } },
+          "400": { "$ref": "#/components/responses/GenericError" }
+        }
+      },
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhook endpoints",
+        "operationId": "listWebhookEndpoints",
+        "parameters": [{ "$ref": "#/components/parameters/Xerobi-Version" }],
+        "responses": {
+          "200": { "description": "List of webhooks", "content": { "application/json": { "schema": { "allOf": [{ "$ref": "#/components/schemas/ListResponse" }, { "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookEndpoint" } } } }] } } } }
+        }
+      }
+    },
+    "/events/{id}/deliveries": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List deliveries for a webhook event",
+        "operationId": "listEventDeliveries",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Deliveries list", "content": { "application/json": { "schema": { "allOf": [{ "$ref": "#/components/schemas/ListResponse" }, { "properties": { "data": { "type": "array", "items": { "type": "object" } } } }] } } } }
+        }
+      }
+    },
+    "/observability/request/{request_id}": {
+      "get": {
+        "tags": ["Observability"],
+        "summary": "Fetch logs/trace for a request_id",
+        "description": "Useful for debugging: returns a structured trace (events, webhook pushes, DB ops) for the given X-Request-Id generated by the gateway.",
+        "operationId": "getRequestTrace",
+        "parameters": [
+          { "$ref": "#/components/parameters/Xerobi-Version" },
+          { "name": "request_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trace object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": { "type": "string" },
+                    "events": { "type": "array", "items": { "type": "object" } },
+                    "logs": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/GenericError" }
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Developer guides & examples",
+    "url": "https://developer.hixbe.com/docs"
+  }
+}

@@ -1,0 +1,327 @@
+---
+title: "SMS API FAQ"
+description: "Frequently asked questions about the Xerobi SMS Gateway API"
+icon: message-circle
+---
+
+## Getting Started with SMS
+
+### Basic SMS Sending
+
+<AccordionGroup>
+<Accordion title="How do I send a single SMS?">
+Send a POST request to `/sms/send` with the recipient and message:
+
+```bash
+curl -X POST "https://api.hixbe.com/sms/send" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+1234567890",
+    "message": "Hello from Xerobi!",
+    "from": "YourSender"
+  }'
+```
+</Accordion>
+
+<Accordion title="What's the maximum SMS length?">
+Standard SMS allows 160 characters. Longer messages are automatically split into multiple parts (concatenated SMS).
+</Accordion>
+
+<Accordion title="How do I send SMS to multiple recipients?">
+Use the bulk SMS endpoint `/sms/send-bulk` with an array of recipients:
+
+```json
+{
+  "recipients": [
+    {"to": "+1234567890", "message": "Personal message 1"},
+    {"to": "+1234567891", "message": "Personal message 2"}
+  ],
+  "from": "YourSender"
+}
+```
+</Accordion>
+</AccordionGroup>
+
+### Sender IDs and Branding
+
+<AccordionGroup>
+<Accordion title="What is a sender ID?">
+A sender ID is the name or number that appears as the sender of your SMS messages (e.g., "YourBrand" instead of a phone number).
+</Accordion>
+
+<Accordion title="How do I get a custom sender ID?">
+Submit a sender ID request through the API or dashboard. Approval typically takes 1-2 business days and requires valid business documentation.
+</Accordion>
+
+<Accordion title="Can I use any sender ID?">
+Sender IDs must be alphanumeric (up to 11 characters) and approved by carriers. Some countries restrict numeric-only sender IDs.
+</Accordion>
+</AccordionGroup>
+
+## Message Templates
+
+### Template Management
+
+<AccordionGroup>
+<Accordion title="Why use SMS templates?">
+Templates ensure consistent messaging, reduce errors, and can be pre-approved for better deliverability in regulated markets.
+</Accordion>
+
+<Accordion title="How do I create a template?">
+```bash
+curl -X POST "https://api.hixbe.com/sms/templates" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Order Confirmation",
+    "content": "Your order {{order_id}} has been confirmed. Track at {{tracking_url}}",
+    "variables": ["order_id", "tracking_url"]
+  }'
+```
+</Accordion>
+
+<Accordion title="How do I use templates in messages?">
+Reference templates by ID and provide variable values:
+
+```json
+{
+  "to": "+1234567890",
+  "template_id": "tmpl_123",
+  "template_variables": {
+    "order_id": "ORD-12345",
+    "tracking_url": "https://track.example.com/12345"
+  }
+}
+```
+</Accordion>
+</AccordionGroup>
+
+## Delivery and Status
+
+### Message Delivery
+
+<AccordionGroup>
+<Accordion title="How do I track message delivery?">
+Use webhooks to receive delivery status updates. Register a webhook endpoint to get real-time notifications for sent, delivered, and failed messages.
+</Accordion>
+
+<Accordion title="What delivery statuses are available?">
+- `sent` - Message accepted by carrier
+- `delivered` - Message delivered to recipient
+- `failed` - Delivery failed
+- `undelivered` - Message expired or blocked
+</Accordion>
+
+<Accordion title="How long do messages take to deliver?">
+Most messages deliver within seconds, but delivery can take up to 24 hours in some regions due to carrier routing.
+</Accordion>
+</AccordionGroup>
+
+### Handling Failures
+
+<AccordionGroup>
+<Accordion title="Why do messages fail?">
+Common reasons: invalid phone numbers, recipient opted out, insufficient credits, sender ID restrictions, or carrier blocks.
+</Accordion>
+
+<Accordion title="How do I handle delivery failures?">
+Implement proper error handling and retry logic. Use webhooks to track failures and notify users when messages can't be delivered.
+</Accordion>
+
+<Accordion title="Can I resend failed messages?">
+Yes, but implement a retry limit (max 3 attempts) and respect user opt-out preferences.
+</Accordion>
+</AccordionGroup>
+
+## Account Management
+
+### Balance and Billing
+
+<AccordionGroup>
+<Accordion title="How do I check my SMS balance?">
+```bash
+curl -X GET "https://api.hixbe.com/sms/balance" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01"
+```
+</Accordion>
+
+<Accordion title="How are SMS messages billed?">
+Billing is per message segment. Standard messages (160 chars) = 1 segment. Longer messages are split into multiple segments.
+</Accordion>
+
+<Accordion title="What happens when I run out of credits?">
+API calls will return `INSUFFICIENT_BALANCE` errors. Set up balance alerts via webhooks to avoid service interruption.
+</Accordion>
+</AccordionGroup>
+
+## International SMS
+
+### Global Messaging
+
+<AccordionGroup>
+<Accordion title="Can I send SMS internationally?">
+Yes, Xerobi supports SMS delivery to over 200 countries. Pricing varies by destination country.
+</Accordion>
+
+<Accordion title="How do phone number formats work?">
+Use international format with country code: `+1` for US/Canada, `+44` for UK, `+91` for India, etc. Do not include spaces, dashes, or parentheses.
+</Accordion>
+
+<Accordion title="Are there country-specific restrictions?">
+Some countries require pre-registration of sender IDs, have content restrictions, or require local entity registration. Check our coverage documentation.
+</Accordion>
+</AccordionGroup>
+
+## Compliance and Regulations
+
+### SMS Regulations
+
+<AccordionGroup>
+<Accordion title="What are TCPA regulations?">
+In the US, the TCPA requires prior express consent for marketing SMS. Include opt-out instructions in all messages.
+</Accordion>
+
+<Accordion title="How do I handle opt-outs?">
+Always include "Reply STOP to unsubscribe" in marketing messages. Honor opt-out requests immediately and maintain suppression lists.
+</Accordion>
+
+<Accordion title="What content is restricted?">
+Avoid spam, phishing, fraudulent content, and restricted materials. Some countries prohibit political or religious content.
+</Accordion>
+</AccordionGroup>
+
+## Webhooks and Integration
+
+### SMS Webhooks
+
+<AccordionGroup>
+<Accordion title="How do I set up delivery webhooks?">
+Register a webhook endpoint to receive delivery notifications:
+
+```bash
+curl -X POST "https://api.hixbe.com/sms/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Xerobi-Version: 2026-01-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/sms",
+    "events": ["message.delivered", "message.failed"]
+  }'
+```
+</Accordion>
+
+<Accordion title="What webhook events are available?">
+- `message.sent` - Message sent to carrier
+- `message.delivered` - Delivered to recipient
+- `message.failed` - Delivery failed
+- `balance.low` - Account balance low
+</Accordion>
+
+<Accordion title="How do I secure my webhooks?">
+Always verify webhook signatures and use HTTPS endpoints. Implement idempotency to handle duplicate events.
+</Accordion>
+</AccordionGroup>
+
+## Testing and Development
+
+### SMS Testing
+
+<AccordionGroup>
+<Accordion title="How do I test SMS without sending real messages?">
+Use our sandbox environment with test phone numbers. Messages won't be delivered but you'll receive success responses for testing.
+</Accordion>
+
+<Accordion title="What test phone numbers can I use?">
+Use any valid phone number format in sandbox. For testing failures, use specific test numbers that trigger different error conditions.
+</Accordion>
+
+<Accordion title="How do I test webhooks locally?">
+Use tools like ngrok to expose local endpoints or use webhook testing services like RequestBin for initial testing.
+</Accordion>
+</AccordionGroup>
+
+## Performance and Reliability
+
+### Rate Limits and Throttling
+
+<AccordionGroup>
+<Accordion title="What are the rate limits?">
+SMS API allows 50 requests per minute per API key. Bulk SMS endpoints have higher limits for large sends.
+</Accordion>
+
+<Accordion title="How do I handle rate limiting?">
+Implement exponential backoff and monitor the rate limit headers in responses.
+</Accordion>
+
+<Accordion title="Can I send high-volume SMS?">
+For high-volume messaging, use the bulk SMS endpoints and consider our enterprise plans for higher throughput.
+</Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+### Common SMS Errors
+
+<AccordionGroup>
+<Accordion title="INSUFFICIENT_BALANCE">
+Top up your account balance. Set up balance monitoring to avoid this error.
+</Accordion>
+
+<Accordion title="INVALID_RECIPIENT">
+Check phone number format. Ensure it includes country code and is valid for the destination country.
+</Accordion>
+
+<Accordion title="SENDER_ID_UNAVAILABLE">
+Your sender ID is not approved or blocked. Contact support to resolve sender ID issues.
+</Accordion>
+</AccordionGroup>
+
+## Pricing and Billing
+
+### SMS Costs
+
+<AccordionGroup>
+<Accordion title="How much does SMS cost?">
+Pricing varies by destination country, typically $0.01-$0.10 per message. Check your dashboard for current rates.
+</Accordion>
+
+<Accordion title="Are there setup fees?">
+No setup fees. You only pay for messages sent. Different pricing tiers available for high-volume users.
+</Accordion>
+
+<Accordion title="How do I monitor my spending?">
+Use the dashboard to track message volume, delivery rates, and costs. Set up spending alerts and limits.
+</Accordion>
+</AccordionGroup>
+
+## Need More Help?
+
+<CardGroup cols={2}>
+<Card title="SMS API Docs" icon="book" href="/sms-api/introduction">
+Complete API reference
+</Card>
+
+<Card title="Webhooks" icon="webhook" href="/faq-guides/webhooks">
+Set up SMS delivery notifications
+</Card>
+
+<Card title="Error Handling" icon="alert-triangle" href="/faq-guides/error-handling">
+Handle SMS errors
+</Card>
+
+<Card title="Best Practices" icon="check-circle" href="/faq-guides/best-practices">
+SMS integration best practices
+</Card>
+
+<Card title="Troubleshooting" icon="wrench" href="/faq-guides/troubleshooting">
+SMS-specific issues
+</Card>
+
+<Card title="Support" icon="life-ring" href="mailto:support@xerobi.com">
+Contact our support team
+</Card>
+</CardGroup>

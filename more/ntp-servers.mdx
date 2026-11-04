@@ -1,0 +1,170 @@
+---
+title: NTP Servers
+description: Free NTP and Roughtime servers provided by Xerobi
+---
+
+# NTP Servers
+
+Xerobi provides free NTP (Network Time Protocol) and Roughtime servers to help you synchronize your systems' clocks accurately and securely.
+
+## NTP Server
+
+Our NTP server provides reliable time synchronization for your applications and systems.
+
+### Server Details
+
+- **Hostname**: `time.xerobi.com`
+- **Protocol**: NTP (Network Time Protocol)
+- **Port**: 123 (default NTP port)
+- **Stratum**: 2
+- **Location**: Global (multiple geographic locations)
+
+### Usage Examples
+
+#### Linux/Unix Systems
+
+Configure NTP client to use our server:
+
+```bash
+# Add to /etc/ntp.conf
+server time.xerobi.com iburst
+
+# Or for systemd-timesyncd
+# Edit /etc/systemd/timesyncd.conf
+NTP=time.xerobi.com
+```
+
+#### Windows
+
+Configure Windows Time service:
+
+```cmd
+w32tm /config /manualpeerlist:time.xerobi.com /syncfromflags:manual /reliable:yes /update
+w32tm /resync
+```
+
+#### Programming Languages
+
+**Python**:
+```python
+import ntplib
+from time import ctime
+
+c = ntplib.NTPClient()
+response = c.request('time.xerobi.com', version=3)
+print(ctime(response.tx_time))
+```
+
+**Node.js**:
+```javascript
+const ntp = require('ntp-client');
+
+ntp.getNetworkTime('time.xerobi.com', 123, (err, date) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  console.log('Current time:', date);
+});
+```
+
+## Roughtime Server
+
+Roughtime is a secure time synchronization protocol designed to be robust against network attackers. We also provide access to Cloudflare's Roughtime server.
+
+### Server Details
+
+- **Hostname**: `roughtime.hixbe.com`
+- **Protocol**: Roughtime
+- **Port**: 2002
+- **Provider**: Cloudflare
+
+### Usage Examples
+
+**Go**:
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+
+    "github.com/hixbe/roughtime"
+)
+
+func main() {
+    config := &roughtime.Config{
+        ServerAddress: "roughtime.hixbe.com:2002",
+    }
+
+    result, err := roughtime.Get(config)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Current time: %s\n", time.Unix(0, result.Midpoint.UnixNano()))
+}
+```
+
+**Python** (using roughtime library):
+```python
+import roughtime
+
+client = roughtime.RoughtimeClient()
+client.add_server("roughtime.hixbe.com", 2002)
+
+try:
+    response = client.get_time()
+    print(f"Current time: {response}")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+## Best Practices
+
+### NTP Best Practices
+
+1. **Use Multiple Servers**: Configure multiple NTP servers for redundancy
+2. **Monitor Time Synchronization**: Regularly check that your systems are properly synchronized
+3. **Use Authentication**: When possible, use authenticated NTP (NTPv4 with autokey)
+4. **Firewall Configuration**: Ensure UDP port 123 is open for NTP traffic
+
+### Roughtime Best Practices
+
+1. **Use for Security-Critical Applications**: Roughtime provides cryptographic security guarantees
+2. **Combine with NTP**: Use Roughtime for security and NTP for precision
+3. **Verify Certificates**: Always verify server certificates when available
+
+## Monitoring
+
+You can monitor the health of our NTP servers:
+
+- **NTP Pool Status**: Check `https://www.ntppool.org/scores/time.xerobi.com`
+- **Server Statistics**: Available at `https://time.xerobi.com/stats`
+
+## Support
+
+If you encounter any issues with our time servers:
+
+- **Email**: support@xerobi.com
+- **Documentation**: Check our [FAQ](/faq-guides/time-synchronization)
+- **Status Page**: Visit `https://status.hixbe.com` for real-time server status
+
+## Terms of Service
+
+- **Free Usage**: These services are provided free of charge
+- **Fair Usage**: Please respect reasonable usage limits
+- **No SLA**: While we strive for high availability, no service level agreement is provided
+- **No Warranty**: Services are provided "as is" without warranty
+
+---
+
+<CardGroup cols={2}>
+  <Card title="NTP Pool Project" href="https://www.ntppool.org">
+    Learn more about NTP and join the NTP Pool
+  </Card>
+  <Card title="Roughtime Specification" href="https://roughtime.googlesource.com/roughtime">
+    Technical details about the Roughtime protocol
+  </Card>
+</CardGroup>
