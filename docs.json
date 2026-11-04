@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
-  "name": "Xerobi Developer Docs",
+  "name": "Xerobi Docs",
   "colors": {
     "primary": "#0075de",
     "light": "#0075de",
@@ -160,49 +160,49 @@
           {
             "group": "Overview",
             "pages": [
-              "certify-api/introduction"
+              "certify/introduction"
             ]
           },
           {
             "group": "Templates",
             "pages": [
-              "certify-api/endpoint/list-templates",
-              "certify-api/endpoint/create-template"
+              "certify/endpoint/list-templates",
+              "certify/endpoint/create-template"
             ]
           },
           {
             "group": "Credentials",
             "pages": [
-              "certify-api/endpoint/list-credentials",
-              "certify-api/endpoint/issue-credential",
-              "certify-api/endpoint/verify-credential",
-              "certify-api/endpoint/revoke-credential"
+              "certify/endpoint/list-credentials",
+              "certify/endpoint/issue-credential",
+              "certify/endpoint/verify-credential",
+              "certify/endpoint/revoke-credential"
             ]
           },
           {
             "group": "Badges",
             "pages": [
-              "certify-api/endpoint/list-badges",
-              "certify-api/endpoint/create-badge"
+              "certify/endpoint/list-badges",
+              "certify/endpoint/create-badge"
             ]
           },
           {
             "group": "Programs",
             "pages": [
-              "certify-api/endpoint/list-programs",
-              "certify-api/endpoint/create-program"
+              "certify/endpoint/list-programs",
+              "certify/endpoint/create-program"
             ]
           },
           {
             "group": "Webhooks",
             "pages": [
-              "certify-api/endpoint/create-webhook"
+              "certify/endpoint/create-webhook"
             ]
           },
           {
             "group": "Audit",
             "pages": [
-              "certify-api/endpoint/list-audit-logs"
+              "certify/endpoint/list-audit-logs"
             ]
           }
         ]
