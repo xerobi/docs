@@ -4,24 +4,24 @@
     "title": "Xerobi Payment API",
     "version": "2026-01-01",
     "description": "A developer-first REST API for a modern payment gateway. Focused on predictable semantics, idempotency, clear errors, and observability. Use `Authorization: Bearer <sk_...>` for requests. All amounts are smallest currency unit (e.g. paisa for BDT).",
-    "termsOfService": "https://api.hixbe.com/terms",
+    "termsOfService": "https://api.xerobi.com/terms",
     "contact": {
       "name": "Xerobi Developer Support",
-      "url": "https://developer.hixbe.com",
+      "url": "https://developer.xerobi.com",
       "email": "support@xerobi.com"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://hixbe.com/license"
+      "url": "https://xerobi.com/license"
     }
   },
   "servers": [
     {
-      "url": "https://sandbox.api.hixbe.com/payment",
+      "url": "https://sandbox.api.xerobi.com/payment",
       "description": "Sandbox (test)"
     },
     {
-      "url": "https://api.hixbe.com/payment",
+      "url": "https://api.xerobi.com/payment",
       "description": "Production"
     }
   ],
@@ -676,6 +676,6 @@
   },
   "externalDocs": {
     "description": "Developer guides & examples",
-    "url": "https://developer.hixbe.com/docs"
+    "url": "https://developer.xerobi.com/docs"
   }
 }

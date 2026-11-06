@@ -13,7 +13,7 @@ Xerobi uses a date-based versioning system to ensure predictable API behavior an
 Versions follow the format `YYYY-MM-DD` and are specified in the `Xerobi-Version` header:
 
 ```bash
-curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+curl -X GET "https://api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```
@@ -137,7 +137,7 @@ Update your integration to use the new version in sandbox first:
 
 ```bash
 # Test with new version
-curl -X GET "https://sandbox.api.hixbe.com/payment/payment_intents" \
+curl -X GET "https://sandbox.api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```
@@ -191,8 +191,8 @@ Watch your application logs and dashboard for any issues after deployment.
 const HIXBE_CONFIG = {
   version: '2026-01-01',
   baseUrl: process.env.NODE_ENV === 'production'
-    ? 'https://api.hixbe.com'
-    : 'https://sandbox.api.hixbe.com'
+    ? 'https://api.xerobi.com'
+    : 'https://sandbox.api.xerobi.com'
 };
 
 class HixbeClient {
@@ -222,7 +222,7 @@ class HixbeClient {
 # Configuration management
 HIXBE_CONFIG = {
     'version': '2026-01-01',
-    'base_url': os.getenv('HIXBE_BASE_URL', 'https://api.hixbe.com')
+    'base_url': os.getenv('HIXBE_BASE_URL', 'https://api.xerobi.com')
 }
 
 class HixbeClient:

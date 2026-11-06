@@ -13,7 +13,7 @@ Get up and running with Xerobi's Payment Gateway, SMS Gateway, or Certification 
 <Steps>
 <Step title="Sign up for a Xerobi account">
 
-Visit [dash.hixbe.com](https://dash.hixbe.com) and create your account. Choose the APIs you need (Payment, SMS, or Certification).
+Visit [dash.xerobi.com](https://dash.xerobi.com) and create your account. Choose the APIs you need (Payment, SMS, or Certification).
 
 </Step>
 
@@ -39,7 +39,7 @@ Visit [dash.hixbe.com](https://dash.hixbe.com) and create your account. Choose t
 All Xerobi API requests require authentication using Bearer tokens and API versioning. Learn more about [authentication](/faq-guides/authentication) and [API versioning](/faq-guides/versioning).
 
 ```bash
-curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+curl -X GET "https://api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json"
@@ -71,7 +71,7 @@ Use our sandbox environment for testing:
 
 ```bash
 # Use sandbox base URL for testing
-curl -X POST "https://sandbox.api.hixbe.com/payment/payment_intents" \
+curl -X POST "https://sandbox.api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -131,8 +131,8 @@ All APIs return JSON responses with consistent error handling:
 
 Replace sandbox URLs with production URLs:
 
-- Sandbox: `https://sandbox.api.hixbe.com`
-- Production: `https://api.hixbe.com`
+- Sandbox: `https://sandbox.api.xerobi.com`
+- Production: `https://api.xerobi.com`
 
 </Step>
 

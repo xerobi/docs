@@ -25,15 +25,15 @@ Ensure your API key starts with the correct prefix:
 </Step>
 
 <Step title="Verify key is active">
-Log into your [dashboard](https://dash.hixbe.com) and check:
+Log into your [dashboard](https://dash.xerobi.com) and check:
 - API key is not expired
 - API key has required permissions
 - Account is in good standing
 </Step>
 
 <Step title="Check environment">
-- Use sandbox keys for testing: `https://sandbox.api.hixbe.com`
-- Use production keys for live: `https://api.hixbe.com`
+- Use sandbox keys for testing: `https://sandbox.api.xerobi.com`
+- Use production keys for live: `https://api.xerobi.com`
 </Step>
 </Steps>
 
@@ -52,7 +52,7 @@ Log into your [dashboard](https://dash.hixbe.com) and check:
 # Correct format
 curl -H "Authorization: Bearer YOUR_API_KEY" \
      -H "Xerobi-Version: 2026-01-01" \
-     https://api.hixbe.com/payment/payment_intents
+     https://api.xerobi.com/payment/payment_intents
 ```
 
 ### Version Header Missing
@@ -170,7 +170,7 @@ curl -X POST https://your-endpoint.com/webhooks \
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
      -H "Xerobi-Version: 2026-01-01" \
-     https://api.hixbe.com/sms/balance
+     https://api.xerobi.com/sms/balance
 ```
 </Step>
 
@@ -234,7 +234,7 @@ List available templates first:
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
      -H "Xerobi-Version: 2026-01-01" \
-     https://api.hixbe.com/certify/templates
+     https://api.xerobi.com/certify/templates
 ```
 
 ## Network and Connectivity
@@ -297,7 +297,7 @@ export HIXBE_VERSION=2026-01-01
 **Configuration Differences:**
 | Setting | Sandbox | Production |
 |---------|---------|------------|
-| Base URL | `sandbox.api.hixbe.com` | `api.hixbe.com` |
+| Base URL | `sandbox.api.xerobi.com` | `api.xerobi.com` |
 | API Keys | Test keys only | Live keys only |
 | Data | Isolated test data | Real production data |
 | Rate Limits | Higher limits | Standard limits |
@@ -316,7 +316,7 @@ const client = new HixbeClient({
 
 ### Check API Status
 
-Visit [status.hixbe.com](https://status.hixbe.com) for real-time API status and incident reports.
+Visit [status.xerobi.com](https://status.xerobi.com) for real-time API status and incident reports.
 
 ### Use Request IDs
 

@@ -9,8 +9,8 @@ Xerobi provides a comprehensive, secure DNS service offering standard DNS resolu
 
 ## Server Details
 
-- **Primary Server**: `dns.hixbe.com`
-- **Secondary Server**: `dns2.hixbe.com`
+- **Primary Server**: `dns.xerobi.com`
+- **Secondary Server**: `dns2.xerobi.com`
 - **Technology**: Enterprise-grade DNS infrastructure
 - **Location**: Global (multiple geographic locations)
 - **Protocols**: DNS, DoH, DoT, DoQ
@@ -110,31 +110,31 @@ Blocks both malware and adult content, providing comprehensive protection for se
 
 Secure DNS queries over HTTPS protocol.
 
-**Endpoint:** `https://dns.hixbe.com/dns-query`
+**Endpoint:** `https://dns.xerobi.com/dns-query`
 
 **Configuration:**
 
 **Firefox:**
 1. Go to `about:config`
-2. Set `network.trr.uri` to `https://dns.hixbe.com/dns-query`
+2. Set `network.trr.uri` to `https://dns.xerobi.com/dns-query`
 3. Set `network.trr.mode` to `2` (or `3` for TRR-only)
 
 **Chrome/Chromium:**
 ```bash
 # Launch with DoH
-chromium --enable-features="dns-over-https" --dns-over-https-server="https://dns.hixbe.com/dns-query"
+chromium --enable-features="dns-over-https" --dns-over-https-server="https://dns.xerobi.com/dns-query"
 ```
 
 **curl:**
 ```bash
-curl -H 'accept: application/dns-json' 'https://dns.hixbe.com/dns-query?name=example.com&type=A'
+curl -H 'accept: application/dns-json' 'https://dns.xerobi.com/dns-query?name=example.com&type=A'
 ```
 
 ### DNS over TLS (DoT)
 
 Secure DNS queries over TLS protocol.
 
-**Server:** `dns.hixbe.com:853`
+**Server:** `dns.xerobi.com:853`
 
 **Configuration:**
 
@@ -142,13 +142,13 @@ Secure DNS queries over TLS protocol.
 ```bash
 # /etc/systemd/resolved.conf
 DNSOverTLS=yes
-DNS=1.1.1.1#dns.hixbe.com
+DNS=1.1.1.1#dns.xerobi.com
 ```
 
 **Android:**
 1. Go to Settings → Network & Internet → Advanced → Private DNS
 2. Select "Private DNS provider hostname"
-3. Enter: `dns.hixbe.com`
+3. Enter: `dns.xerobi.com`
 
 **iOS:**
 1. Go to Settings → Wi-Fi → [Network Name]
@@ -160,7 +160,7 @@ DNS=1.1.1.1#dns.hixbe.com
 
 Ultra-fast DNS queries over QUIC protocol.
 
-**Server:** `dns.hixbe.com:784`
+**Server:** `dns.xerobi.com:784`
 
 **Note:** DoQ support depends on client compatibility. Currently supported by some DNS clients and applications.
 
@@ -188,7 +188,7 @@ except dns.resolver.NXDOMAIN:
 import requests
 
 def doh_query(domain, qtype='A'):
-    url = f"https://dns.hixbe.com/dns-query"
+    url = f"https://dns.xerobi.com/dns-query"
     headers = {'accept': 'application/dns-json'}
     params = {'name': domain, 'type': qtype}
 
@@ -213,7 +213,7 @@ dns.resolve('example.com', 'A', (err, addresses) => {
 
 // DoH implementation
 function dohQuery(domain, type = 'A') {
-  const url = `https://dns.hixbe.com/dns-query?name=${domain}&type=${type}`;
+  const url = `https://dns.xerobi.com/dns-query?name=${domain}&type=${type}`;
 
   https.get(url, { headers: { 'accept': 'application/dns-json' } }, (res) => {
     let data = '';
@@ -400,7 +400,7 @@ dig @165.101.132.104 example.com +dnssec
 
 **Test DoH:**
 ```bash
-curl -H 'accept: application/dns-json' 'https://dns.hixbe.com/dns-query?name=example.com&type=A'
+curl -H 'accept: application/dns-json' 'https://dns.xerobi.com/dns-query?name=example.com&type=A'
 ```
 
 ## API Access
@@ -409,10 +409,10 @@ For programmatic access to DNS data:
 
 ```bash
 # Get DNS records
-curl "https://dns.hixbe.com/api/v1/resolve?name=example.com&type=A"
+curl "https://dns.xerobi.com/api/v1/resolve?name=example.com&type=A"
 
 # Check filtering status
-curl "https://dns.hixbe.com/api/v1/check?name=malicious.example.com"
+curl "https://dns.xerobi.com/api/v1/check?name=malicious.example.com"
 ```
 
 ## Terms of Service
@@ -428,7 +428,7 @@ curl "https://dns.hixbe.com/api/v1/check?name=malicious.example.com"
 For DNS service support:
 
 - **Email**: support@xerobi.com
-- **Status Page**: `https://status.hixbe.com/dns`
+- **Status Page**: `https://status.xerobi.com/dns`
 - **Documentation**: Additional guides available
 - **Community**: Join our developer community
 

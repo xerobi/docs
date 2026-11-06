@@ -13,7 +13,7 @@ icon: certificate
 Issue credentials using the `/credentials` endpoint with a template and recipient information:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/credentials" \
+curl -X POST "https://api.xerobi.com/certify/credentials" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -44,7 +44,7 @@ Recipients receive a secure link via email or direct API response. They can view
 Design templates through the API or dashboard with custom layouts, branding, and variable fields:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/templates" \
+curl -X POST "https://api.xerobi.com/certify/templates" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -81,7 +81,7 @@ Templates can be updated, but this affects future credentials only. Existing iss
 Use the verification endpoint with the credential ID:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/credentials/verify" \
+curl -X POST "https://api.xerobi.com/certify/credentials/verify" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -104,7 +104,7 @@ Yes, credentials include public verification URLs that anyone can use without AP
 
 <AccordionGroup>
 <Accordion title="How do public verification links work?">
-Each credential has a unique verification URL like `https://verify.hixbe.com/cred_1234567890` that shows credential details and validity status.
+Each credential has a unique verification URL like `https://verify.xerobi.com/cred_1234567890` that shows credential details and validity status.
 </Accordion>
 
 <Accordion title="Can I customize verification pages?">
@@ -129,7 +129,7 @@ Badges are typically smaller achievements or skills, while certificates represen
 Create badges similar to certificates but with badge-specific metadata:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/badges" \
+curl -X POST "https://api.xerobi.com/certify/badges" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -160,7 +160,7 @@ Programs are structured learning pathways with multiple credentials, prerequisit
 Create programs with credential requirements and progression rules:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/programs" \
+curl -X POST "https://api.xerobi.com/certify/programs" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -206,7 +206,7 @@ We comply with GDPR and other privacy regulations. Personal data is encrypted an
 Use the revoke endpoint to mark credentials as invalid:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/credentials/revoke" \
+curl -X POST "https://api.xerobi.com/certify/credentials/revoke" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -243,7 +243,7 @@ Yes, you can unrevoke credentials if the revocation was made in error.
 Register webhook endpoints for certification events:
 
 ```bash
-curl -X POST "https://api.hixbe.com/certify/webhooks" \
+curl -X POST "https://api.xerobi.com/certify/webhooks" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -272,7 +272,7 @@ All credential operations are logged: issuance, verification, revocation, viewin
 Use the audit logs endpoint to retrieve activity history:
 
 ```bash
-curl -X GET "https://api.hixbe.com/certify/audit-logs?credential_id=cred_123" \
+curl -X GET "https://api.xerobi.com/certify/audit-logs?credential_id=cred_123" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```

@@ -13,7 +13,7 @@ icon: message-circle
 Send a POST request to `/sms/send` with the recipient and message:
 
 ```bash
-curl -X POST "https://api.hixbe.com/sms/send" \
+curl -X POST "https://api.xerobi.com/sms/send" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -71,7 +71,7 @@ Templates ensure consistent messaging, reduce errors, and can be pre-approved fo
 
 <Accordion title="How do I create a template?">
 ```bash
-curl -X POST "https://api.hixbe.com/sms/templates" \
+curl -X POST "https://api.xerobi.com/sms/templates" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -143,7 +143,7 @@ Yes, but implement a retry limit (max 3 attempts) and respect user opt-out prefe
 <AccordionGroup>
 <Accordion title="How do I check my SMS balance?">
 ```bash
-curl -X GET "https://api.hixbe.com/sms/balance" \
+curl -X GET "https://api.xerobi.com/sms/balance" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```
@@ -203,7 +203,7 @@ Avoid spam, phishing, fraudulent content, and restricted materials. Some countri
 Register a webhook endpoint to receive delivery notifications:
 
 ```bash
-curl -X POST "https://api.hixbe.com/sms/webhooks" \
+curl -X POST "https://api.xerobi.com/sms/webhooks" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \

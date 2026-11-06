@@ -47,7 +47,7 @@ app.post('/webhooks/hixbe', express.raw({ type: 'application/json' }), (req, res
 
 <Step title="Register webhook in dashboard">
 
-1. Go to [dash.hixbe.com](https://dash.hixbe.com)
+1. Go to [dash.xerobi.com](https://dash.xerobi.com)
 2. Navigate to Webhooks section
 3. Click "Create Webhook"
 4. Enter your endpoint URL
@@ -83,7 +83,7 @@ app.post('/webhooks/sms-delivery', (req, res) => {
 <Step title="Register SMS webhook">
 
 ```bash
-curl -X POST "https://api.hixbe.com/sms/webhooks" \
+curl -X POST "https://api.xerobi.com/sms/webhooks" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \

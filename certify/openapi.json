@@ -14,7 +14,7 @@
     },
     "servers": [
         {
-            "url": "https://api.hixbe.com/certify",
+            "url": "https://api.xerobi.com/certify",
             "description": "Production"
         }
     ],
@@ -198,12 +198,12 @@
                                         {
                                             "id": "cred_1234567890abcdef",
                                             "status": "issued",
-                                            "verify_url": "https://verify.hixbe.com/cred_1234567890abcdef"
+                                            "verify_url": "https://verify.xerobi.com/cred_1234567890abcdef"
                                         },
                                         {
                                             "id": "cred_0987654321fedcba",
                                             "status": "revoked",
-                                            "verify_url": "https://verify.hixbe.com/cred_0987654321fedcba"
+                                            "verify_url": "https://verify.xerobi.com/cred_0987654321fedcba"
                                         }
                                     ]
                                 }
@@ -273,7 +273,7 @@
                                 "example": {
                                     "id": "cred_1234567890abcdef",
                                     "status": "issued",
-                                    "verify_url": "https://verify.hixbe.com/cred_1234567890abcdef"
+                                    "verify_url": "https://verify.xerobi.com/cred_1234567890abcdef"
                                 }
                             }
                         }
@@ -941,7 +941,7 @@
                         "type": "string",
                         "format": "uri",
                         "description": "Public URL for verifying this credential",
-                        "example": "https://verify.hixbe.com/cred_1234567890abcdef"
+                        "example": "https://verify.xerobi.com/cred_1234567890abcdef"
                     }
                 }
             },

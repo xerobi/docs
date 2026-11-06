@@ -74,7 +74,7 @@ Roughtime is a secure time synchronization protocol designed to be robust agains
 
 ### Server Details
 
-- **Hostname**: `roughtime.hixbe.com`
+- **Hostname**: `roughtime.xerobi.com`
 - **Protocol**: Roughtime
 - **Port**: 2002
 - **Provider**: Cloudflare
@@ -95,7 +95,7 @@ import (
 
 func main() {
     config := &roughtime.Config{
-        ServerAddress: "roughtime.hixbe.com:2002",
+        ServerAddress: "roughtime.xerobi.com:2002",
     }
 
     result, err := roughtime.Get(config)
@@ -112,7 +112,7 @@ func main() {
 import roughtime
 
 client = roughtime.RoughtimeClient()
-client.add_server("roughtime.hixbe.com", 2002)
+client.add_server("roughtime.xerobi.com", 2002)
 
 try:
     response = client.get_time()
@@ -149,7 +149,7 @@ If you encounter any issues with our time servers:
 
 - **Email**: support@xerobi.com
 - **Documentation**: Check our [FAQ](/faq-guides/time-synchronization)
-- **Status Page**: Visit `https://status.hixbe.com` for real-time server status
+- **Status Page**: Visit `https://status.xerobi.com` for real-time server status
 
 ## Terms of Service
 

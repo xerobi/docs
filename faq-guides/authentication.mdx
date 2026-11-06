@@ -15,14 +15,14 @@ All Xerobi API requests require authentication to ensure security and proper acc
 Include your API key in the `Authorization` header using the Bearer scheme:
 
 ```bash
-curl -X GET "https://api.hixbe.com/payment/payment_intents" \
+curl -X GET "https://api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```
 
 <CodeGroup>
 ```javascript JavaScript
-const response = await fetch('https://api.hixbe.com/payment/payment_intents', {
+const response = await fetch('https://api.xerobi.com/payment/payment_intents', {
   method: 'GET',
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -41,14 +41,14 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-response = requests.get('https://api.hixbe.com/payment/payment_intents', headers=headers)
+response = requests.get('https://api.xerobi.com/payment/payment_intents', headers=headers)
 ```
 
 ```php PHP
 <?php
 $ch = curl_init();
 
-curl_setopt($ch, CURLOPT_URL, 'https://api.hixbe.com/payment/payment_intents');
+curl_setopt($ch, CURLOPT_URL, 'https://api.xerobi.com/payment/payment_intents');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Authorization: Bearer YOUR_API_KEY',
@@ -75,7 +75,7 @@ curl_close($ch);
 <Steps>
 <Step title="Access your dashboard">
 
-Log in to [dash.hixbe.com](https://dash.hixbe.com) and navigate to the API Keys section.
+Log in to [dash.xerobi.com](https://dash.xerobi.com) and navigate to the API Keys section.
 
 </Step>
 
@@ -170,7 +170,7 @@ Use our sandbox environment to test authentication without affecting production 
 
 ```bash
 # Sandbox URL
-curl -X GET "https://sandbox.api.hixbe.com/payment/payment_intents" \
+curl -X GET "https://sandbox.api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_SANDBOX_KEY" \
   -H "Xerobi-Version: 2026-01-01"
 ```

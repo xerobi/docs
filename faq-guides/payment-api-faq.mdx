@@ -13,7 +13,7 @@ icon: credit-card
 To create a payment intent, send a POST request to `/payment_intents` with the amount, currency, and description:
 
 ```bash
-curl -X POST "https://api.hixbe.com/payment/payment_intents" \
+curl -X POST "https://api.xerobi.com/payment/payment_intents" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -90,7 +90,7 @@ Yes, customers can have multiple saved payment methods. You can list them and se
 Create a refund by providing the payment intent ID and optionally the amount to refund:
 
 ```bash
-curl -X POST "https://api.hixbe.com/payment/refunds" \
+curl -X POST "https://api.xerobi.com/payment/refunds" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Xerobi-Version: 2026-01-01" \
   -H "Content-Type: application/json" \
@@ -156,7 +156,7 @@ Yes, all payment methods are tokenized. We never store raw card numbers - only t
 
 <AccordionGroup>
 <Accordion title="How do I test payments?">
-Use our sandbox environment at `https://sandbox.api.hixbe.com`. Use test API keys and test card numbers like `4242 4242 4242 4242`.
+Use our sandbox environment at `https://sandbox.api.xerobi.com`. Use test API keys and test card numbers like `4242 4242 4242 4242`.
 </Accordion>
 
 <Accordion title="What test cards are available?">

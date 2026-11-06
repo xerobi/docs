@@ -7,16 +7,16 @@
     "contact": {
       "name": "Xerobi API Support",
       "email": "support@xerobi.com",
-      "url": "https://support.hixbe.com"
+      "url": "https://support.xerobi.com"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://hixbe.com/terms"
+      "url": "https://xerobi.com/terms"
     }
   },
   "servers": [
     {
-      "url": "https://api.hixbe.com/fiber",
+      "url": "https://api.xerobi.com/fiber",
       "description": "Production API"
     }
   ],
@@ -167,22 +167,22 @@
           "server": {
             "type": "string",
             "description": "Primary speed test server hostname",
-            "example": "speedtest-ny.hixbe.com"
+            "example": "speedtest-ny.xerobi.com"
           },
           "latency_endpoint": {
             "type": "string",
             "description": "Endpoint for latency/ping tests",
-            "example": "https://speedtest-ny.hixbe.com/latency"
+            "example": "https://speedtest-ny.xerobi.com/latency"
           },
           "download_endpoint": {
             "type": "string",
             "description": "Endpoint for download speed tests",
-            "example": "https://speedtest-ny.hixbe.com/download"
+            "example": "https://speedtest-ny.xerobi.com/download"
           },
           "upload_endpoint": {
             "type": "string",
             "description": "Endpoint for upload speed tests",
-            "example": "https://speedtest-ny.hixbe.com/upload"
+            "example": "https://speedtest-ny.xerobi.com/upload"
           },
           "recommended_duration_seconds": {
             "type": "integer",
@@ -570,10 +570,10 @@
                   "$ref": "#/components/schemas/SpeedTestConfig"
                 },
                 "example": {
-                  "server": "speedtest-ny.hixbe.com",
-                  "latency_endpoint": "https://speedtest-ny.hixbe.com/latency",
-                  "download_endpoint": "https://speedtest-ny.hixbe.com/download",
-                  "upload_endpoint": "https://speedtest-ny.hixbe.com/upload",
+                  "server": "speedtest-ny.xerobi.com",
+                  "latency_endpoint": "https://speedtest-ny.xerobi.com/latency",
+                  "download_endpoint": "https://speedtest-ny.xerobi.com/download",
+                  "upload_endpoint": "https://speedtest-ny.xerobi.com/upload",
                   "recommended_duration_seconds": 10
                 }
               }

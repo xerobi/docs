@@ -3,25 +3,25 @@
   "info": {
     "title": "Xerobi SMS Gateway API",
     "version": "2026-01-01",
-    "description": "A modern, developer-friendly SMS Gateway API supporting transactional, OTP, promotional and bulk messaging.\n\n## Overview\n\nThe Xerobi SMS Gateway API enables you to send SMS messages programmatically with support for:\n\n- **Transactional SMS**: Account notifications, confirmations, alerts\n- **OTP Messages**: One-time passwords with optimized delivery routes\n- **Promotional SMS**: Marketing campaigns and announcements\n- **Bulk Messaging**: Send to thousands of recipients efficiently\n- **Templates**: Reusable message templates with variable substitution\n- **Webhooks**: Real-time delivery status notifications\n\n## Authentication\n\nAuthenticate using your API key as a Bearer token:\n\n```bash\ncurl -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  -H \"Xerobi-Version: 2026-01-01\" \\\n  https://api.hixbe.com/sms/messages\n```\n\n**API Key Types:**\n- `sk_live_*` - Production keys for live messaging\n- `sk_test_*` - Test keys for development (no actual SMS sent)\n\nGet your API keys from the [Xerobi Dashboard](https://dashboard.hixbe.com/api-keys).\n\n## Rate Limits\n\n- **Standard accounts**: 100 requests/minute\n- **Business accounts**: 1,000 requests/minute\n- **Enterprise accounts**: Custom limits\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests per window\n- `X-RateLimit-Remaining`: Requests remaining\n- `X-RateLimit-Reset`: Unix timestamp when limit resets\n\n## Message Routes\n\nDifferent routes optimize for delivery speed, reliability, and cost:\n\n| Route | Use Case | Delivery Speed | Cost |\n|-------|----------|----------------|------|\n| **otp** | One-time passwords | < 5 seconds | Premium |\n| **transactional** | Notifications, alerts | < 30 seconds | Standard |\n| **promotional** | Marketing messages | < 2 minutes | Economy |\n\n## Phone Number Format\n\nPhone numbers must be in international format without + or spaces:\n- ✅ Correct: `8801712345678` (Bangladesh)\n- ✅ Correct: `14155551234` (USA)\n- ❌ Incorrect: `+880 171 234 5678`\n- ❌ Incorrect: `01712345678`\n\n## Idempotency\n\nInclude `Idempotency-Key` header to safely retry requests:\n\n```bash\ncurl -H \"Idempotency-Key: unique-key-123\" \\\n  -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  ...\n```\n\n## Webhooks\n\nReceive real-time delivery updates via webhooks. Events include:\n- `message.queued` - Message accepted and queued\n- `message.sent` - Message sent to carrier\n- `message.delivered` - Successfully delivered\n- `message.failed` - Delivery failed\n\n## Support\n\nNeed help? Contact us:\n- Email: support@xerobi.com\n- Documentation: https://developer.hixbe.com\n- Status: https://status.hixbe.com",
+    "description": "A modern, developer-friendly SMS Gateway API supporting transactional, OTP, promotional and bulk messaging.\n\n## Overview\n\nThe Xerobi SMS Gateway API enables you to send SMS messages programmatically with support for:\n\n- **Transactional SMS**: Account notifications, confirmations, alerts\n- **OTP Messages**: One-time passwords with optimized delivery routes\n- **Promotional SMS**: Marketing campaigns and announcements\n- **Bulk Messaging**: Send to thousands of recipients efficiently\n- **Templates**: Reusable message templates with variable substitution\n- **Webhooks**: Real-time delivery status notifications\n\n## Authentication\n\nAuthenticate using your API key as a Bearer token:\n\n```bash\ncurl -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  -H \"Xerobi-Version: 2026-01-01\" \\\n  https://api.xerobi.com/sms/messages\n```\n\n**API Key Types:**\n- `sk_live_*` - Production keys for live messaging\n- `sk_test_*` - Test keys for development (no actual SMS sent)\n\nGet your API keys from the [Xerobi Dashboard](https://dashboard.xerobi.com/api-keys).\n\n## Rate Limits\n\n- **Standard accounts**: 100 requests/minute\n- **Business accounts**: 1,000 requests/minute\n- **Enterprise accounts**: Custom limits\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests per window\n- `X-RateLimit-Remaining`: Requests remaining\n- `X-RateLimit-Reset`: Unix timestamp when limit resets\n\n## Message Routes\n\nDifferent routes optimize for delivery speed, reliability, and cost:\n\n| Route | Use Case | Delivery Speed | Cost |\n|-------|----------|----------------|------|\n| **otp** | One-time passwords | < 5 seconds | Premium |\n| **transactional** | Notifications, alerts | < 30 seconds | Standard |\n| **promotional** | Marketing messages | < 2 minutes | Economy |\n\n## Phone Number Format\n\nPhone numbers must be in international format without + or spaces:\n- ✅ Correct: `8801712345678` (Bangladesh)\n- ✅ Correct: `14155551234` (USA)\n- ❌ Incorrect: `+880 171 234 5678`\n- ❌ Incorrect: `01712345678`\n\n## Idempotency\n\nInclude `Idempotency-Key` header to safely retry requests:\n\n```bash\ncurl -H \"Idempotency-Key: unique-key-123\" \\\n  -H \"Authorization: Bearer sk_live_xxxxx\" \\\n  ...\n```\n\n## Webhooks\n\nReceive real-time delivery updates via webhooks. Events include:\n- `message.queued` - Message accepted and queued\n- `message.sent` - Message sent to carrier\n- `message.delivered` - Successfully delivered\n- `message.failed` - Delivery failed\n\n## Support\n\nNeed help? Contact us:\n- Email: support@xerobi.com\n- Documentation: https://developer.xerobi.com\n- Status: https://status.xerobi.com",
     "contact": {
       "name": "Xerobi Developer Support",
-      "url": "https://developer.hixbe.com",
+      "url": "https://developer.xerobi.com",
       "email": "support@xerobi.com"
     },
-    "termsOfService": "https://hixbe.com/terms",
+    "termsOfService": "https://xerobi.com/terms",
     "license": {
       "name": "Commercial",
-      "url": "https://hixbe.com/license"
+      "url": "https://xerobi.com/license"
     }
   },
   "servers": [
     {
-      "url": "https://api.hixbe.com/sms",
+      "url": "https://api.xerobi.com/sms",
       "description": "Production Server"
     },
     {
-      "url": "https://api-sandbox.hixbe.com/sms",
+      "url": "https://api-sandbox.xerobi.com/sms",
       "description": "Sandbox Server (test mode)"
     }
   ],
@@ -126,7 +126,7 @@
               "doc_url": {
                 "type": "string",
                 "description": "Link to relevant documentation",
-                "example": "https://developer.hixbe.com/errors/invalid-phone-number"
+                "example": "https://developer.xerobi.com/errors/invalid-phone-number"
               }
             },
             "required": ["type", "code", "message", "request_id"]
@@ -605,7 +605,7 @@
               "error": {
                 "type": "authentication_error",
                 "code": "invalid_api_key",
-                "message": "Invalid API key provided. Check your API key at https://dashboard.hixbe.com/api-keys",
+                "message": "Invalid API key provided. Check your API key at https://dashboard.xerobi.com/api-keys",
                 "request_id": "req_abc123"
               }
             }
@@ -684,7 +684,7 @@
                 "message": "Phone number must be in international format (e.g., 8801712345678)",
                 "param": "to",
                 "request_id": "req_def456",
-                "doc_url": "https://developer.hixbe.com/phone-format"
+                "doc_url": "https://developer.xerobi.com/phone-format"
               }
             }
           }
@@ -703,7 +703,7 @@
                 "code": "insufficient_balance",
                 "message": "Insufficient balance. Current balance: 5.20 BDT. Required: 25.00 BDT. Please recharge your account.",
                 "request_id": "req_ghi789",
-                "doc_url": "https://dashboard.hixbe.com/billing/recharge"
+                "doc_url": "https://dashboard.xerobi.com/billing/recharge"
               }
             }
           }
@@ -1084,7 +1084,7 @@
               },
               "example": {
                 "recipients": ["8801712345678", "8801987654321", "8801555555555"],
-                "message": "Flash Sale! 50% off everything today only. Shop now at hixbe.com",
+                "message": "Flash Sale! 50% off everything today only. Shop now at xerobi.com",
                 "from": "HIXBE",
                 "route": "promotional"
               }
@@ -1276,7 +1276,7 @@
                       "type": "string",
                       "format": "uri"
                     },
-                    "example": ["https://files.hixbe.com/doc_abc123.pdf"]
+                    "example": ["https://files.xerobi.com/doc_abc123.pdf"]
                   }
                 },
                 "required": ["name", "type", "country", "purpose"]
